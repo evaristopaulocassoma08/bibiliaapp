@@ -9,6 +9,8 @@ import SearchPage from "./pages/SearchPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import NotesPage from "./pages/NotesPage";
 import GroupsPage from "./pages/GroupsPage";
+import ProfilePage from "./pages/ProfilePage";
+import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +28,8 @@ const App = () => (
           <Route path="/favoritos" element={<FavoritesPage />} />
           <Route path="/notas" element={<NotesPage />} />
           <Route path="/grupos" element={<GroupsPage />} />
+          <Route path="/perfil" element={<ProfilePage />} />
+          <Route path="/configuracoes" element={<SettingsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
