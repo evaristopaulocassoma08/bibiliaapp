@@ -1,35 +1,109 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
-import { defaultGroups } from "@/lib/bible-data";
-import { Users, MessageCircle, UserPlus, UserMinus, Crown, Globe, Lock, Search, Plus } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Users, MessageCircle, UserPlus, UserMinus, Crown, Globe, Search, Plus, Settings, X } from "lucide-react";
 import { toast } from "sonner";
 
-const GroupsPage = () => {
-  const [joined, setJoined] = useState<Set<string>>(new Set());
-  const [searchQuery, setSearchQuery] = useState("");
+interface Group {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  owner_id: string | null;
+  is_public: boolean;
+}
 
-  const handleJoin = (groupId: string) => {
-    setJoined((prev) => {
-      const next = new Set(prev);
-      if (next.has(groupId)) {
-        next.delete(groupId);
-        toast("Você saiu do grupo");
-      } else {
-        next.add(groupId);
-        toast.success("Você entrou no grupo!");
-      }
-      return next;
+interface GroupMember {
+  group_id: string;
+  user_id: string;
+  role: string;
+}
+
+const GroupsPage = () => {
+  const { user } = useAuth();
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [members, setMembers] = useState<GroupMember[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadGroups();
+  }, []);
+
+  const loadGroups = async () => {
+    const { data: groupData } = await supabase.from("groups").select("*").order("created_at");
+    const { data: memberData } = await supabase.from("group_members").select("*");
+    if (groupData) setGroups(groupData as Group[]);
+    if (memberData) setMembers(memberData as GroupMember[]);
+    setLoading(false);
+  };
+
+  const handleJoin = async (groupId: string) => {
+    if (!user) return;
+    const isMember = members.some((m) => m.group_id === groupId && m.user_id === user.id);
+    
+    if (isMember) {
+      await supabase.from("group_members").delete().eq("group_id", groupId).eq("user_id", user.id);
+      toast("Você saiu do grupo");
+    } else {
+      await supabase.from("group_members").insert({ group_id: groupId, user_id: user.id });
+      toast.success("Você entrou no grupo!");
+    }
+    loadGroups();
+  };
+
+  const handleCreate = async () => {
+    if (!user || !newName.trim()) {
+      toast.error("Digite o nome do grupo");
+      return;
+    }
+    const { error } = await supabase.from("groups").insert({
+      name: newName.trim(),
+      description: newDesc.trim(),
+      owner_id: user.id,
     });
+    if (error) {
+      toast.error("Erro ao criar grupo");
+      return;
+    }
+    toast.success("Grupo criado!");
+    setNewName("");
+    setNewDesc("");
+    setShowCreate(false);
+    loadGroups();
+  };
+
+  const handleDelete = async (groupId: string) => {
+    await supabase.from("groups").delete().eq("id", groupId);
+    toast("Grupo removido");
+    loadGroups();
   };
 
   const filteredGroups = searchQuery
-    ? defaultGroups.filter((g) =>
+    ? groups.filter((g) =>
         g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        g.description.toLowerCase().includes(searchQuery.toLowerCase())
+        (g.description || "").toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : defaultGroups;
+    : groups;
 
-  const joinedGroups = defaultGroups.filter((g) => joined.has(g.id));
+  const memberCount = (groupId: string) => members.filter((m) => m.group_id === groupId).length;
+  const isMember = (groupId: string) => user ? members.some((m) => m.group_id === groupId && m.user_id === user.id) : false;
+  const isOwner = (group: Group) => user ? group.owner_id === user.id : false;
+  const joinedGroups = groups.filter((g) => isMember(g.id));
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center py-20">
+          <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -42,11 +116,37 @@ const GroupsPage = () => {
             </h1>
             <p className="text-sm text-muted-foreground">Conecte-se com irmãos na fé</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity shadow-lg shadow-primary/20">
-            <Plus className="h-4 w-4" />
-            Criar
+          <button
+            onClick={() => setShowCreate(!showCreate)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity shadow-lg shadow-primary/20"
+          >
+            {showCreate ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {showCreate ? "Cancelar" : "Criar"}
           </button>
         </div>
+
+        {/* Create Group Form */}
+        {showCreate && (
+          <div className="glass-card rounded-xl p-5 space-y-4 animate-fade-in border-primary/20">
+            <input
+              type="text"
+              placeholder="Nome do grupo"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-secondary text-foreground placeholder:text-muted-foreground border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm"
+            />
+            <textarea
+              placeholder="Descrição (opcional)"
+              value={newDesc}
+              onChange={(e) => setNewDesc(e.target.value)}
+              rows={3}
+              className="w-full px-4 py-3 rounded-xl bg-secondary text-foreground placeholder:text-muted-foreground border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm resize-none"
+            />
+            <button onClick={handleCreate} className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 shadow-lg shadow-primary/20">
+              Criar Grupo
+            </button>
+          </div>
+        )}
 
         {/* Search */}
         <div className="relative">
@@ -77,16 +177,23 @@ const GroupsPage = () => {
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-sm text-foreground">{group.name}</h3>
                       <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1"><Users className="h-3 w-3" />{group.members + 1}</span>
+                        <span className="flex items-center gap-1"><Users className="h-3 w-3" />{memberCount(group.id)}</span>
                         <span className="flex items-center gap-1 text-green-500"><MessageCircle className="h-3 w-3" />Ativo</span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleJoin(group.id)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
-                    >
-                      <UserMinus className="h-3.5 w-3.5" />
-                    </button>
+                    <div className="flex gap-1">
+                      {isOwner(group) && (
+                        <button onClick={() => handleDelete(group.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors">
+                          <Settings className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleJoin(group.id)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                      >
+                        <UserMinus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -102,7 +209,7 @@ const GroupsPage = () => {
           </h2>
           <div className="grid gap-3">
             {filteredGroups.map((group) => {
-              const isJoined = joined.has(group.id);
+              const joined = isMember(group.id);
               return (
                 <div key={group.id} className="glass-card rounded-xl p-4 hover:border-primary/20 transition-colors">
                   <div className="flex items-start gap-3">
@@ -118,24 +225,20 @@ const GroupsPage = () => {
                       <div className="flex items-center gap-4 mt-2">
                         <span className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Users className="h-3 w-3" />
-                          {group.members + (isJoined ? 1 : 0)} membros
-                        </span>
-                        <span className="flex items-center gap-1 text-xs text-green-500">
-                          <MessageCircle className="h-3 w-3" />
-                          Ativo agora
+                          {memberCount(group.id)} membros
                         </span>
                       </div>
                     </div>
                     <button
                       onClick={() => handleJoin(group.id)}
                       className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all shrink-0 ${
-                        isJoined
+                        joined
                           ? "bg-secondary text-secondary-foreground hover:bg-destructive/10 hover:text-destructive"
                           : "bg-primary text-primary-foreground hover:opacity-90 shadow-lg shadow-primary/20"
                       }`}
                     >
-                      {isJoined ? <UserMinus className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-                      {isJoined ? "Sair" : "Entrar"}
+                      {joined ? <UserMinus className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
+                      {joined ? "Sair" : "Entrar"}
                     </button>
                   </div>
                 </div>

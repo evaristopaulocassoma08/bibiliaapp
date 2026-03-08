@@ -1,20 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
-import { Settings, Moon, Sun, Bell, BellOff, Type, ChevronRight, Trash2, Info, ExternalLink, Volume2, VolumeX, Smartphone } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Settings, Moon, Sun, Bell, BellOff, Type, ChevronRight, Trash2, Info, Volume2, VolumeX, Smartphone, LogOut } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const SettingsPage = () => {
-  const [darkMode, setDarkMode] = useState(true);
-  const [notifications, setNotifications] = useState(true);
-  const [fontSize, setFontSize] = useState<"small" | "medium" | "large">("medium");
-  const [sound, setSound] = useState(true);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") !== "false");
+  const [notifications, setNotifications] = useState(() => localStorage.getItem("notifications") !== "false");
+  const [fontSize, setFontSize] = useState<"small" | "medium" | "large">(() => (localStorage.getItem("fontSize") as any) || "medium");
+  const [sound, setSound] = useState(() => localStorage.getItem("sound") !== "false");
 
-  const handleClearFavorites = () => {
+  useEffect(() => {
+    localStorage.setItem("darkMode", String(darkMode));
+    document.documentElement.classList.toggle("light", !darkMode);
+  }, [darkMode]);
+
+  useEffect(() => {
+    localStorage.setItem("fontSize", fontSize);
+    document.documentElement.style.fontSize = fontSize === "small" ? "14px" : fontSize === "large" ? "18px" : "16px";
+  }, [fontSize]);
+
+  useEffect(() => { localStorage.setItem("notifications", String(notifications)); }, [notifications]);
+  useEffect(() => { localStorage.setItem("sound", String(sound)); }, [sound]);
+
+  const handleClearFavorites = async () => {
+    if (user) {
+      await supabase.from("favorites").delete().eq("user_id", user.id);
+    }
     localStorage.removeItem("bible-favorites");
     toast("Favoritos limpos com sucesso");
   };
 
-  const handleClearNotes = () => {
+  const handleClearNotes = async () => {
+    if (user) {
+      await supabase.from("notes").delete().eq("user_id", user.id);
+    }
     localStorage.removeItem("bible-notes");
     toast("Notas removidas com sucesso");
   };
@@ -22,6 +46,21 @@ const SettingsPage = () => {
   const handleClearHistory = () => {
     localStorage.removeItem("bible-reading-history");
     toast("Histórico limpo com sucesso");
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast("Sessão encerrada");
+    navigate("/login");
+  };
+
+  const handleInstallPWA = () => {
+    const deferredPrompt = (window as any).__pwaInstallPrompt;
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+    } else {
+      toast("Para instalar: abra o menu do navegador e toque em 'Adicionar à tela inicial'");
+    }
   };
 
   return (
@@ -44,11 +83,11 @@ const SettingsPage = () => {
                 {darkMode ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
                 <div>
                   <p className="text-sm font-medium text-foreground">Modo Escuro</p>
-                  <p className="text-xs text-muted-foreground">Tema escuro ativado</p>
+                  <p className="text-xs text-muted-foreground">{darkMode ? "Tema escuro ativado" : "Tema claro ativado"}</p>
                 </div>
               </div>
               <button
-                onClick={() => { setDarkMode(!darkMode); toast("Tema atualizado"); }}
+                onClick={() => setDarkMode(!darkMode)}
                 className={`w-12 h-7 rounded-full transition-colors relative ${darkMode ? "bg-primary" : "bg-secondary"}`}
               >
                 <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-foreground transition-transform ${darkMode ? "left-[calc(100%-1.625rem)]" : "left-0.5"}`} />
@@ -67,7 +106,7 @@ const SettingsPage = () => {
                 {(["small", "medium", "large"] as const).map((size) => (
                   <button
                     key={size}
-                    onClick={() => { setFontSize(size); toast("Fonte atualizada"); }}
+                    onClick={() => setFontSize(size)}
                     className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
                       fontSize === size
                         ? "bg-primary text-primary-foreground"
@@ -111,7 +150,7 @@ const SettingsPage = () => {
                 </div>
               </div>
               <button
-                onClick={() => { setSound(!sound); }}
+                onClick={() => { setSound(!sound); toast(sound ? "Sons desativados" : "Sons ativados"); }}
                 className={`w-12 h-7 rounded-full transition-colors relative ${sound ? "bg-primary" : "bg-secondary"}`}
               >
                 <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-foreground transition-transform ${sound ? "left-[calc(100%-1.625rem)]" : "left-0.5"}`} />
@@ -148,7 +187,7 @@ const SettingsPage = () => {
           </div>
         </section>
 
-        {/* About */}
+        {/* About & Install */}
         <section className="space-y-2">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground px-1">Sobre</h2>
           <div className="glass-card rounded-xl overflow-hidden divide-y divide-border/50">
@@ -161,15 +200,24 @@ const SettingsPage = () => {
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between p-4">
+            <button onClick={handleInstallPWA} className="w-full flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors">
               <div className="flex items-center gap-3">
                 <Smartphone className="h-5 w-5 text-primary" />
                 <p className="text-sm font-medium text-foreground">Instalar App</p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-            </div>
+            </button>
           </div>
         </section>
+
+        {/* Sign Out */}
+        <button
+          onClick={handleSignOut}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-destructive/10 text-destructive text-sm font-semibold hover:bg-destructive/20 transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          Sair da Conta
+        </button>
       </div>
     </Layout>
   );

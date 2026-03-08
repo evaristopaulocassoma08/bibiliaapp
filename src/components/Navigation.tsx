@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { Book, Heart, Home, Users, Search, StickyNote, Menu, X, User, Settings, Flame } from "lucide-react";
+import { Book, Heart, Home, Users, Search, StickyNote, Menu, X, User, Settings, Flame, Sparkles, LogOut } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const navItems = [
   { title: "Início", url: "/", icon: Home },
   { title: "Bíblia", url: "/biblia", icon: Book },
   { title: "Buscar", url: "/buscar", icon: Search },
+  { title: "Pregação IA", url: "/pregacao", icon: Sparkles },
   { title: "Favoritos", url: "/favoritos", icon: Heart },
   { title: "Notas", url: "/notas", icon: StickyNote },
   { title: "Grupos", url: "/grupos", icon: Users },
@@ -16,7 +20,7 @@ const navItems = [
 const bottomItems = [
   { title: "Início", url: "/", icon: Home },
   { title: "Bíblia", url: "/biblia", icon: Book },
-  { title: "Buscar", url: "/buscar", icon: Search },
+  { title: "IA", url: "/pregacao", icon: Sparkles },
   { title: "Favoritos", url: "/favoritos", icon: Heart },
   { title: "Perfil", url: "/perfil", icon: User },
 ];
@@ -44,6 +48,14 @@ export function BottomNav() {
 
 export function TopNav() {
   const [open, setOpen] = useState(false);
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast("Sessão encerrada");
+    navigate("/login");
+  };
 
   return (
     <header className="sticky top-0 z-50 glass-card border-b border-border/50">
@@ -71,6 +83,9 @@ export function TopNav() {
               {item.title}
             </NavLink>
           ))}
+          <button onClick={handleSignOut} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors ml-1">
+            <LogOut className="h-4 w-4" />
+          </button>
         </nav>
 
         {/* Mobile menu button */}
@@ -98,6 +113,13 @@ export function TopNav() {
               {item.title}
             </NavLink>
           ))}
+          <button
+            onClick={() => { setOpen(false); handleSignOut(); }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            Sair
+          </button>
         </nav>
       )}
     </header>
