@@ -6,6 +6,7 @@
 
 @layer base {
   :root {
+    /* Dark theme (default) */
     --background: 0 0% 4%;
     --foreground: 40 20% 92%;
 
@@ -47,6 +48,48 @@
 
     --gold-glow: 43 90% 55%;
     --surface-hover: 0 0% 12%;
+  }
+
+  .light {
+    --background: 40 30% 97%;
+    --foreground: 0 0% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    --primary: 38 78% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 40 20% 92%;
+    --secondary-foreground: 0 0% 15%;
+
+    --muted: 40 20% 94%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 38 78% 42%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 15% 85%;
+    --input: 40 15% 88%;
+    --ring: 38 78% 42%;
+
+    --sidebar-background: 40 30% 97%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 38 78% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 40 20% 92%;
+    --sidebar-accent-foreground: 0 0% 15%;
+    --sidebar-border: 40 15% 85%;
+    --sidebar-ring: 38 78% 42%;
+
+    --gold-glow: 38 85% 48%;
+    --surface-hover: 40 20% 90%;
   }
 }
 
