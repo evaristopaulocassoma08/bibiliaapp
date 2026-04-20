@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { addToReadingHistory } from "@/lib/bible-data";
+import { trackReading } from "@/lib/activity-tracker";
 import {
   getBooks,
   getChapter,
@@ -54,6 +55,7 @@ const BiblePage = () => {
     if (!selectedBook) return;
     setSelectedChapter(chapter);
     addToReadingHistory(`${selectedBook.name} ${chapter}`);
+    trackReading(selectedBook.id, selectedBook.name, chapter);
   };
 
   const handleDownload = async (book: BibleBookRow, e: React.MouseEvent) => {

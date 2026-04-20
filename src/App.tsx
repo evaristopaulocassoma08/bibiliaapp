@@ -13,6 +13,7 @@ import GroupsPage from "./pages/GroupsPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import PreachingPage from "./pages/PreachingPage";
+import HistoryPage from "./pages/HistoryPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 
@@ -43,6 +44,7 @@ const AppRoutes = () => {
       <Route path="/perfil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/configuracoes" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
       <Route path="/pregacao" element={<ProtectedRoute><PreachingPage /></ProtectedRoute>} />
+      <Route path="/historico" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
