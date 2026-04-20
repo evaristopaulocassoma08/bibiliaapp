@@ -25,21 +25,28 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-const AppRoutes = () => (
-  <Routes>
-    <Route path="/login" element={<AuthPage />} />
-    <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-    <Route path="/biblia" element={<ProtectedRoute><BiblePage /></ProtectedRoute>} />
-    <Route path="/buscar" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
-    <Route path="/favoritos" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
-    <Route path="/notas" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
-    <Route path="/grupos" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
-    <Route path="/perfil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-    <Route path="/configuracoes" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-    <Route path="/pregacao" element={<ProtectedRoute><PreachingPage /></ProtectedRoute>} />
-    <Route path="*" element={<NotFound />} />
-  </Routes>
-);
+const AppRoutes = () => {
+  const { user, loading } = useAuth();
+
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={loading ? <div className="min-h-screen bg-background flex items-center justify-center"><div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div> : user ? <Navigate to="/" replace /> : <AuthPage />}
+      />
+      <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+      <Route path="/biblia" element={<ProtectedRoute><BiblePage /></ProtectedRoute>} />
+      <Route path="/buscar" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
+      <Route path="/favoritos" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
+      <Route path="/notas" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
+      <Route path="/grupos" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
+      <Route path="/perfil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+      <Route path="/configuracoes" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+      <Route path="/pregacao" element={<ProtectedRoute><PreachingPage /></ProtectedRoute>} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
