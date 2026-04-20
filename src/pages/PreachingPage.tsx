@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { trackSermon } from "@/lib/activity-tracker";
 import {
   Sparkles,
   Send,
@@ -82,6 +83,7 @@ const PreachingPage = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setSermon({ theme: theme.trim(), title: data.title, content: data.content });
+      trackSermon(theme.trim(), data.title);
       toast.success("Pregação gerada!");
     } catch (error: any) {
       console.error(error);

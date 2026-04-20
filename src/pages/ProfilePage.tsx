@@ -17,7 +17,7 @@ const ProfilePage = () => {
   const menuItems = [
     { icon: Heart, label: "Meus Favoritos", url: "/favoritos" },
     { icon: StickyNote, label: "Minhas Notas", url: "/notas" },
-    { icon: BookOpen, label: "Histórico de Leitura", url: "/biblia" },
+    { icon: BookOpen, label: "Histórico de Leitura", url: "/historico" },
     { icon: Settings, label: "Configurações", url: "/configuracoes" },
   ];
 
