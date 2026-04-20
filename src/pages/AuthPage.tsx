@@ -25,7 +25,7 @@ const AuthPage = () => {
         toast.success("Bem-vindo de volta!");
         navigate("/");
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -34,20 +34,43 @@ const AuthPage = () => {
           },
         });
         if (error) throw error;
+        if (data.user && data.user.identities?.length === 0) {
+          toast.error("Este email já está cadastrado. Tente entrar ou usar o Google.");
+          setIsLogin(true);
+          return;
+        }
         toast.success("Conta criada! Verifique seu email.");
       }
     } catch (error: any) {
-      toast.error(error.message || "Erro na autenticação");
+      const message = String(error?.message || "");
+
+      if (message.toLowerCase().includes("invalid login credentials")) {
+        toast.error("Email ou senha inválidos.");
+      } else if (message.toLowerCase().includes("email not confirmed")) {
+        toast.error("Confirme o email antes de entrar.");
+      } else if (message.toLowerCase().includes("security purposes")) {
+        toast.error("Aguarde um pouco antes de tentar novamente.");
+      } else {
+        toast.error(message || "Erro na autenticação");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
+    setLoading(true);
     const { error } = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
+      extraParams: { prompt: "select_account" },
     });
-    if (error) toast.error("Erro ao entrar com Google");
+    if (error) {
+      toast.error("Erro ao entrar com Google");
+      setLoading(false);
+      return;
+    }
+
+    navigate("/");
   };
 
   return (
@@ -71,6 +94,7 @@ const AuthPage = () => {
         {/* Google Button */}
         <button
           onClick={handleGoogleLogin}
+          disabled={loading}
           className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-border bg-secondary hover:bg-secondary/80 transition-colors text-sm font-medium text-foreground"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
