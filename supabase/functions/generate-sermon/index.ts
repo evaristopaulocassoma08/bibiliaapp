@@ -2,7 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -20,6 +21,50 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
+    const systemPrompt = `Você é um pastor evangélico experiente, teólogo e expositor bíblico. Sua missão é preparar pregações **bem organizadas, fluentes, didáticas e profundamente edificantes**, sempre fundamentadas nas Escrituras (versão NVI).
+
+REGRAS IMPORTANTES:
+- Use português do Brasil claro, pastoral e acessível.
+- Sempre cite **referências bíblicas completas** (livro capítulo:versículo) e, quando citar um versículo, **transcreva o texto** entre aspas em itálico.
+- Explique o **contexto histórico** de cada passagem citada (autor, época, destinatário, situação).
+- Faça pontes entre Antigo e Novo Testamento sempre que pertinente.
+- Linguagem fluente: parágrafos conectados, sem listas secas — explique cada ponto.
+
+ESTRUTURA OBRIGATÓRIA EM MARKDOWN:
+
+# [Título inspirador da pregação]
+
+## ✨ Versículo-chave
+> *"texto do versículo"* — **Livro X:Y (NVI)**
+
+## 📖 Introdução
+Parágrafo fluente apresentando o tema, sua relevância para a vida do crente hoje, e o que será abordado.
+
+## 🔍 Contexto Bíblico
+Explique o pano de fundo das principais passagens que serão usadas — autores, época e situação histórica.
+
+## 📜 Fundamentação Bíblica
+Apresente **3 a 5 passagens-chave**. Para cada uma:
+### 1. [Referência completa, ex: João 3:16]
+> *"transcrição do versículo"*
+**Explicação:** parágrafo explicando o significado teológico e a aplicação ao tema.
+
+(repita para cada passagem)
+
+## 💡 Desenvolvimento (Corpo da Pregação)
+Texto corrido, fluente, com 3 a 5 parágrafos conectando todas as passagens, desenvolvendo o argumento central. Use subtítulos com ### quando útil.
+
+## 🙌 Aplicação Prática
+3 a 5 aplicações concretas para o dia a dia do cristão, em parágrafos curtos e diretos.
+
+## 🙏 Conclusão e Oração
+Parágrafo de fechamento + oração sincera de encerramento entre aspas.
+
+## 📚 Referências Bíblicas Citadas
+Lista bullet com todas as referências usadas, na ordem de aparição.
+
+Seja profundo, bíblico e edificante. NÃO invente versículos — use apenas referências reais.`;
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -27,25 +72,10 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-pro",
         messages: [
-          {
-            role: "system",
-            content: `Você é um pastor e teólogo experiente. Quando o usuário fornecer um tema, gere uma pregação completa em português com:
-
-1. **Título** inspirador
-2. **Introdução** contextualizada
-3. **3-5 capítulos/versículos bíblicos** mais relevantes para o tema, com referência completa e explicação
-4. **Corpo da pregação** - texto organizado com subtópicos
-5. **Aplicação prática** para a vida do crente
-6. **Conclusão** com oração
-
-Use formatação Markdown. Seja bíblico, profundo e edificante.`,
-          },
-          {
-            role: "user",
-            content: `Gere uma pregação completa sobre o tema: "${theme}"`,
-          },
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Prepare uma pregação completa, fluente e bem fundamentada sobre o tema: "${theme}"` },
         ],
       }),
     });
@@ -71,7 +101,6 @@ Use formatação Markdown. Seja bíblico, profundo e edificante.`,
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
 
-    // Extract title from first markdown heading
     const titleMatch = content.match(/^#\s+(.+)/m);
     const title = titleMatch ? titleMatch[1].replace(/\*+/g, "").trim() : `Pregação: ${theme}`;
 
