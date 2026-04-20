@@ -228,6 +228,38 @@ export type Database = {
         }
         Relationships: []
       }
+      sermon_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          sermon_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          sermon_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          sermon_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sermon_comments_sermon_id_fkey"
+            columns: ["sermon_id"]
+            isOneToOne: false
+            referencedRelation: "sermons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sermons: {
         Row: {
           chapters: Json | null
