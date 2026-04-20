@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      bible_books: {
+        Row: {
+          abbrev: string
+          chapters_count: number
+          created_at: string
+          id: number
+          name: string
+          position: number
+          testament: string
+        }
+        Insert: {
+          abbrev: string
+          chapters_count: number
+          created_at?: string
+          id: number
+          name: string
+          position: number
+          testament: string
+        }
+        Update: {
+          abbrev?: string
+          chapters_count?: number
+          created_at?: string
+          id?: number
+          name?: string
+          position?: number
+          testament?: string
+        }
+        Relationships: []
+      }
+      bible_verses: {
+        Row: {
+          book_id: number
+          chapter: number
+          created_at: string
+          id: number
+          text: string
+          verse: number
+          version: string
+        }
+        Insert: {
+          book_id: number
+          chapter: number
+          created_at?: string
+          id?: number
+          text: string
+          verse: number
+          version?: string
+        }
+        Update: {
+          book_id?: number
+          chapter?: number
+          created_at?: string
+          id?: number
+          text?: string
+          verse?: number
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bible_verses_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "bible_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favorites: {
         Row: {
           created_at: string
