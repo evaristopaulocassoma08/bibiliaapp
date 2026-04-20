@@ -1,12 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { dailyVerses, toggleFavorite, isFavorite } from "@/lib/bible-data";
+import { trackSearch } from "@/lib/activity-tracker";
 import { Search, Heart, BookOpen, Filter, X } from "lucide-react";
 import { toast } from "sonner";
 
 const SearchPage = () => {
   const [query, setQuery] = useState("");
   const [filterTestament, setFilterTestament] = useState<"all" | "old" | "new">("all");
+
+  // Track search queries (debounced) for activity history
+  useEffect(() => {
+    if (query.trim().length < 2) return;
+    const t = setTimeout(() => trackSearch(query), 800);
+    return () => clearTimeout(t);
+  }, [query]);
 
   const oldTestamentBooks = ["Gênesis", "Êxodo", "Levítico", "Números", "Deuteronômio", "Josué", "Juízes", "Rute", "1 Samuel", "2 Samuel", "1 Reis", "2 Reis", "1 Crônicas", "2 Crônicas", "Esdras", "Neemias", "Ester", "Jó", "Salmos", "Provérbios", "Eclesiastes", "Cantares", "Isaías", "Jeremias", "Lamentações", "Ezequiel", "Daniel", "Oséias", "Joel", "Amós", "Obadias", "Jonas", "Miquéias", "Naum", "Habacuque", "Sofonias", "Ageu", "Zacarias", "Malaquias"];
 
