@@ -17,8 +17,8 @@ const Index = () => {
     setFavorited(isFavorite(verse.reference));
   }, [verse]);
 
-  const handleFavorite = () => {
-    const result = toggleFavorite(verse);
+  const handleFavorite = async () => {
+    const result = await toggleFavorite(verse);
     setFavorited(result);
     toast(result ? "Adicionado aos favoritos" : "Removido dos favoritos");
   };
