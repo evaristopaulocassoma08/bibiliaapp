@@ -21,91 +21,89 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    const systemPrompt = `Você é um pastor evangélico experiente, teólogo e expositor bíblico. Sua missão é preparar pregações **bem organizadas, fluentes, didáticas e profundamente edificantes**, sempre fundamentadas nas Escrituras (versão NVI).
+    const systemPrompt = `Você é um pastor evangélico experiente e expositor bíblico. Prepare pregações **organizadas, fluentes, didáticas e edificantes** baseadas na Bíblia (NVI).
 
-REGRAS IMPORTANTES:
-- Use português do Brasil claro, pastoral e acessível.
-- Sempre cite **referências bíblicas completas** (livro capítulo:versículo) e, quando citar um versículo, **transcreva o texto** entre aspas em itálico.
-- Explique o **contexto histórico** de cada passagem citada (autor, época, destinatário, situação).
-- Faça pontes entre Antigo e Novo Testamento sempre que pertinente.
-- Linguagem fluente: parágrafos conectados, sem listas secas — explique cada ponto.
+REGRAS:
+- Português do Brasil claro e pastoral.
+- Cite **referências bíblicas completas** (Livro Capítulo:Versículo) e transcreva o versículo entre aspas em itálico.
+- Explique o **contexto histórico** (autor, época, situação).
+- Linguagem fluente, parágrafos conectados, sem listas secas.
 
 ESTRUTURA OBRIGATÓRIA EM MARKDOWN:
 
-# [Título inspirador da pregação]
+# [Título inspirador]
 
 ## ✨ Versículo-chave
-> *"texto do versículo"* — **Livro X:Y (NVI)**
+> *"texto"* — **Livro X:Y (NVI)**
 
 ## 📖 Introdução
-Parágrafo fluente apresentando o tema, sua relevância para a vida do crente hoje, e o que será abordado.
+Parágrafo apresentando o tema e sua relevância hoje.
 
 ## 🔍 Contexto Bíblico
-Explique o pano de fundo das principais passagens que serão usadas — autores, época e situação histórica.
+Pano de fundo das passagens — autores, época, situação.
 
 ## 📜 Fundamentação Bíblica
-Apresente **3 a 5 passagens-chave**. Para cada uma:
-### 1. [Referência completa, ex: João 3:16]
-> *"transcrição do versículo"*
-**Explicação:** parágrafo explicando o significado teológico e a aplicação ao tema.
+Apresente **3 a 4 passagens-chave**. Para cada uma:
+### [Referência ex: João 3:16]
+> *"versículo transcrito"*
+**Explicação:** parágrafo explicando significado e aplicação.
 
-(repita para cada passagem)
-
-## 💡 Desenvolvimento (Corpo da Pregação)
-Texto corrido, fluente, com 3 a 5 parágrafos conectando todas as passagens, desenvolvendo o argumento central. Use subtítulos com ### quando útil.
+## 💡 Desenvolvimento
+Texto corrido fluente, 3 a 4 parágrafos conectando as passagens.
 
 ## 🙌 Aplicação Prática
-3 a 5 aplicações concretas para o dia a dia do cristão, em parágrafos curtos e diretos.
+3 a 4 aplicações concretas em parágrafos curtos.
 
 ## 🙏 Conclusão e Oração
-Parágrafo de fechamento + oração sincera de encerramento entre aspas.
+Fechamento + oração sincera entre aspas.
 
-## 📚 Referências Bíblicas Citadas
-Lista bullet com todas as referências usadas, na ordem de aparição.
+## 📚 Referências Citadas
+Lista bullet com todas as referências.
 
-Seja profundo, bíblico e edificante. NÃO invente versículos — use apenas referências reais.`;
+Seja profundo e bíblico. NÃO invente versículos.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "google/gemini-2.5-flash",
+        stream: true,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Prepare uma pregação completa, fluente e bem fundamentada sobre o tema: "${theme}"` },
+          { role: "user", content: `Prepare uma pregação completa e fluente sobre: "${theme}"` },
         ],
       }),
     });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Muitas requisições. Tente novamente em alguns segundos." }), {
+    if (!upstream.ok) {
+      if (upstream.status === 429) {
+        return new Response(JSON.stringify({ error: "Muitas requisições. Tente em alguns segundos." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
+      if (upstream.status === 402) {
         return new Response(JSON.stringify({ error: "Créditos insuficientes." }), {
           status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
+      const t = await upstream.text();
+      console.error("AI gateway error:", upstream.status, t);
       throw new Error("AI gateway error");
     }
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "";
-
-    const titleMatch = content.match(/^#\s+(.+)/m);
-    const title = titleMatch ? titleMatch[1].replace(/\*+/g, "").trim() : `Pregação: ${theme}`;
-
-    return new Response(JSON.stringify({ title, content }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Stream the response back to the client (SSE passthrough)
+    return new Response(upstream.body, {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
     });
   } catch (e) {
     console.error("generate-sermon error:", e);

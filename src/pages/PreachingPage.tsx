@@ -75,19 +75,67 @@ const PreachingPage = () => {
     setLoading(true);
     setSermon(null);
     setShowSaved(false);
+    const t = theme.trim();
 
     try {
-      const { data, error } = await supabase.functions.invoke("generate-sermon", {
-        body: { theme: theme.trim() },
+      // Streaming via SSE — texto aparece em tempo real
+      const url = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/generate-sermon`;
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ theme: t }),
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setSermon({ theme: theme.trim(), title: data.title, content: data.content });
-      trackSermon(theme.trim(), data.title);
+
+      if (!resp.ok || !resp.body) {
+        const errText = await resp.text().catch(() => "");
+        let msg = "Erro ao gerar pregação";
+        try { msg = JSON.parse(errText).error || msg; } catch { /* */ }
+        throw new Error(msg);
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let content = "";
+      // Mostrar logo o card com conteúdo vazio para streaming
+      setSermon({ theme: t, title: `Pregação: ${t}`, content: "" });
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const payload = trimmed.slice(5).trim();
+          if (payload === "[DONE]") continue;
+          try {
+            const json = JSON.parse(payload);
+            const delta = json.choices?.[0]?.delta?.content;
+            if (delta) {
+              content += delta;
+              setSermon((prev) => prev ? { ...prev, content } : prev);
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+      const titleMatch = content.match(/^#\s+(.+)/m);
+      const finalTitle = titleMatch ? titleMatch[1].replace(/\*+/g, "").trim() : `Pregação: ${t}`;
+      setSermon({ theme: t, title: finalTitle, content });
+      trackSermon(t, finalTitle);
       toast.success("Pregação gerada!");
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Erro ao gerar pregação. Tente novamente.");
+      setSermon(null);
     } finally {
       setLoading(false);
     }
@@ -298,19 +346,19 @@ const PreachingPage = () => {
           </div>
         )}
 
-        {/* Loading */}
-        {loading && (
+        {/* Loading sem conteúdo ainda */}
+        {loading && !sermon?.content && (
           <div className="glass-card rounded-xl p-8 text-center space-y-3">
             <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
             <p className="text-sm text-muted-foreground">
-              Preparando pregação fluente sobre <span className="text-foreground font-medium">"{theme}"</span>...
+              Preparando pregação sobre <span className="text-foreground font-medium">"{theme}"</span>...
             </p>
-            <p className="text-xs text-muted-foreground/70">Buscando capítulos, versículos e contexto bíblico</p>
+            <p className="text-xs text-muted-foreground/70">Conectando ao modelo de IA</p>
           </div>
         )}
 
-        {/* Result */}
-        {sermon && !loading && (
+        {/* Result (também aparece durante streaming) */}
+        {sermon && (sermon.content || !loading) && (
           <div className="space-y-4 animate-fade-in">
             <div className="glass-card rounded-xl p-5 sm:p-6 space-y-4">
               {/* Action bar */}

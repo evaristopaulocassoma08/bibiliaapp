@@ -147,53 +147,142 @@ export function getDailyVerse(): BibleVerse {
   return dailyVerses[dayOfYear % dailyVerses.length];
 }
 
+// ============================================================
+//  FAVORITOS — sincronizado com Supabase (cache local)
+// ============================================================
+import { supabase } from "@/integrations/supabase/client";
+
 export function getFavorites(): BibleVerse[] {
   const stored = localStorage.getItem("bible-favorites");
   return stored ? JSON.parse(stored) : [];
 }
 
-export function toggleFavorite(verse: BibleVerse): boolean {
+function setLocalFavorites(list: BibleVerse[]) {
+  localStorage.setItem("bible-favorites", JSON.stringify(list));
+}
+
+/** Carrega do Supabase para o cache local. */
+export async function syncFavoritesFromCloud(): Promise<BibleVerse[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return getFavorites();
+  const { data, error } = await supabase
+    .from("favorites")
+    .select("verse_reference, verse_text")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+  if (error || !data) return getFavorites();
+  const list: BibleVerse[] = data.map((row: any) => {
+    const ref: string = row.verse_reference;
+    const m = ref.match(/^(.+?)\s+(\d+):(\d+)$/);
+    return {
+      reference: ref,
+      text: row.verse_text,
+      book: m?.[1] ?? ref,
+      chapter: m ? parseInt(m[2], 10) : 0,
+      verse: m ? parseInt(m[3], 10) : 0,
+    };
+  });
+  setLocalFavorites(list);
+  return list;
+}
+
+export async function toggleFavorite(verse: BibleVerse): Promise<boolean> {
   const favorites = getFavorites();
-  const index = favorites.findIndex(
-    (f) => f.reference === verse.reference
-  );
+  const index = favorites.findIndex((f) => f.reference === verse.reference);
+  const { data: { user } } = await supabase.auth.getUser();
+
   if (index >= 0) {
     favorites.splice(index, 1);
-    localStorage.setItem("bible-favorites", JSON.stringify(favorites));
+    setLocalFavorites(favorites);
+    if (user) {
+      await supabase.from("favorites").delete()
+        .eq("user_id", user.id).eq("verse_reference", verse.reference);
+    }
     return false;
-  } else {
-    favorites.push(verse);
-    localStorage.setItem("bible-favorites", JSON.stringify(favorites));
-    return true;
   }
+  favorites.unshift(verse);
+  setLocalFavorites(favorites);
+  if (user) {
+    await supabase.from("favorites").insert({
+      user_id: user.id,
+      verse_reference: verse.reference,
+      verse_text: verse.text,
+    });
+  }
+  return true;
 }
 
 export function isFavorite(reference: string): boolean {
-  const favorites = getFavorites();
-  return favorites.some((f) => f.reference === reference);
+  return getFavorites().some((f) => f.reference === reference);
 }
 
+// ============================================================
+//  NOTAS — sincronizado com Supabase (cache local)
+// ============================================================
 export function getNotes(): Note[] {
   const stored = localStorage.getItem("bible-notes");
   return stored ? JSON.parse(stored) : [];
 }
 
-export function addNote(reference: string, text: string): Note {
-  const notes = getNotes();
-  const note: Note = {
-    id: Date.now().toString(),
-    reference,
-    text,
-    createdAt: new Date().toISOString(),
-  };
-  notes.push(note);
-  localStorage.setItem("bible-notes", JSON.stringify(notes));
+function setLocalNotes(list: Note[]) {
+  localStorage.setItem("bible-notes", JSON.stringify(list));
+}
+
+export async function syncNotesFromCloud(): Promise<Note[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return getNotes();
+  const { data, error } = await supabase
+    .from("notes")
+    .select("id, title, content, verse_reference, created_at, updated_at")
+    .eq("user_id", user.id)
+    .order("updated_at", { ascending: false });
+  if (error || !data) return getNotes();
+  const list: Note[] = data.map((row: any) => ({
+    id: row.id,
+    reference: row.verse_reference || row.title || "",
+    text: row.content || "",
+    createdAt: row.created_at,
+  }));
+  setLocalNotes(list);
+  return list;
+}
+
+export async function addNote(reference: string, text: string): Promise<Note> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const { data, error } = await supabase.from("notes").insert({
+      user_id: user.id,
+      title: reference || "Nota",
+      content: text,
+      verse_reference: reference || null,
+    }).select().single();
+    if (!error && data) {
+      const note: Note = { id: data.id, reference, text, createdAt: data.created_at };
+      setLocalNotes([note, ...getNotes()]);
+      return note;
+    }
+  }
+  const note: Note = { id: Date.now().toString(), reference, text, createdAt: new Date().toISOString() };
+  setLocalNotes([note, ...getNotes()]);
   return note;
 }
 
-export function deleteNote(id: string): void {
-  const notes = getNotes().filter((n) => n.id !== id);
-  localStorage.setItem("bible-notes", JSON.stringify(notes));
+export async function updateNote(id: string, reference: string, text: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    await supabase.from("notes").update({
+      title: reference || "Nota",
+      content: text,
+      verse_reference: reference || null,
+    }).eq("id", id).eq("user_id", user.id);
+  }
+  setLocalNotes(getNotes().map((n) => n.id === id ? { ...n, reference, text } : n));
+}
+
+export async function deleteNote(id: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) await supabase.from("notes").delete().eq("id", id).eq("user_id", user.id);
+  setLocalNotes(getNotes().filter((n) => n.id !== id));
 }
 
 export function getReadingHistory(): string[] {

@@ -30,8 +30,8 @@ const SearchPage = () => {
       })
     : [];
 
-  const handleFavorite = (verse: typeof dailyVerses[0]) => {
-    const result = toggleFavorite(verse);
+  const handleFavorite = async (verse: typeof dailyVerses[0]) => {
+    const result = await toggleFavorite(verse);
     toast(result ? "Adicionado aos favoritos" : "Removido dos favoritos");
   };
 
