@@ -346,19 +346,19 @@ const PreachingPage = () => {
           </div>
         )}
 
-        {/* Loading */}
-        {loading && (
+        {/* Loading sem conteúdo ainda */}
+        {loading && !sermon?.content && (
           <div className="glass-card rounded-xl p-8 text-center space-y-3">
             <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
             <p className="text-sm text-muted-foreground">
-              Preparando pregação fluente sobre <span className="text-foreground font-medium">"{theme}"</span>...
+              Preparando pregação sobre <span className="text-foreground font-medium">"{theme}"</span>...
             </p>
-            <p className="text-xs text-muted-foreground/70">Buscando capítulos, versículos e contexto bíblico</p>
+            <p className="text-xs text-muted-foreground/70">Conectando ao modelo de IA</p>
           </div>
         )}
 
-        {/* Result */}
-        {sermon && !loading && (
+        {/* Result (também aparece durante streaming) */}
+        {sermon && (sermon.content || !loading) && (
           <div className="space-y-4 animate-fade-in">
             <div className="glass-card rounded-xl p-5 sm:p-6 space-y-4">
               {/* Action bar */}
