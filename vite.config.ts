@@ -21,7 +21,18 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         navigateFallbackDenylist: [/^\/~oauth/],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
+          {
+            // Bíblia (livros e versículos) — cache longo para uso offline
+            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/(bible_books|bible_verses).*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "bible-cache",
+              expiration: { maxEntries: 5000, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: "NetworkFirst",
