@@ -106,25 +106,110 @@ export type Database = {
         }
         Relationships: []
       }
+      group_channels: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          group_id: string
+          icon: string | null
+          id: string
+          name: string
+          position: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          group_id: string
+          icon?: string | null
+          id?: string
+          name: string
+          position?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          group_id?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_channels_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_join_requests: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_join_requests_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_members: {
         Row: {
+          banned: boolean
           group_id: string
           id: string
           joined_at: string
+          last_read_at: string
+          muted: boolean
+          nickname: string | null
           role: string
           user_id: string
         }
         Insert: {
+          banned?: boolean
           group_id: string
           id?: string
           joined_at?: string
+          last_read_at?: string
+          muted?: boolean
+          nickname?: string | null
           role?: string
           user_id: string
         }
         Update: {
+          banned?: boolean
           group_id?: string
           id?: string
           joined_at?: string
+          last_read_at?: string
+          muted?: boolean
+          nickname?: string | null
           role?: string
           user_id?: string
         }
@@ -140,35 +225,87 @@ export type Database = {
       }
       group_messages: {
         Row: {
+          channel_id: string | null
           content: string | null
           created_at: string
+          edited_at: string | null
           group_id: string
           id: string
           media_type: string
           media_url: string | null
+          reply_to_id: string | null
           user_id: string
         }
         Insert: {
+          channel_id?: string | null
           content?: string | null
           created_at?: string
+          edited_at?: string | null
           group_id: string
           id?: string
           media_type?: string
           media_url?: string | null
+          reply_to_id?: string | null
           user_id: string
         }
         Update: {
+          channel_id?: string | null
           content?: string | null
           created_at?: string
+          edited_at?: string | null
           group_id?: string
           id?: string
           media_type?: string
           media_url?: string | null
+          reply_to_id?: string | null
           user_id?: string
         }
         Relationships: [
           {
+            foreignKeyName: "group_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "group_channels"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "group_messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "group_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_typing: {
+        Row: {
+          channel_id: string | null
+          group_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel_id?: string | null
+          group_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel_id?: string | null
+          group_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_typing_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
@@ -182,27 +319,39 @@ export type Database = {
           description: string | null
           icon: string | null
           id: string
+          invite_code: string | null
           is_public: boolean | null
           name: string
+          only_admins_post: boolean
           owner_id: string | null
+          pinned_message_id: string | null
+          requires_approval: boolean
         }
         Insert: {
           created_at?: string
           description?: string | null
           icon?: string | null
           id?: string
+          invite_code?: string | null
           is_public?: boolean | null
           name: string
+          only_admins_post?: boolean
           owner_id?: string | null
+          pinned_message_id?: string | null
+          requires_approval?: boolean
         }
         Update: {
           created_at?: string
           description?: string | null
           icon?: string | null
           id?: string
+          invite_code?: string | null
           is_public?: boolean | null
           name?: string
+          only_admins_post?: boolean
           owner_id?: string | null
+          pinned_message_id?: string | null
+          requires_approval?: boolean
         }
         Relationships: []
       }
@@ -341,6 +490,7 @@ export type Database = {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
+      join_group_by_invite: { Args: { _code: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
