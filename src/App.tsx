@@ -15,6 +15,7 @@ import SettingsPage from "./pages/SettingsPage";
 import PreachingPage from "./pages/PreachingPage";
 import HistoryPage from "./pages/HistoryPage";
 import AuthPage from "./pages/AuthPage";
+import AboutPage from "./pages/AboutPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const AppRoutes = () => {
       <Route path="/configuracoes" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
       <Route path="/pregacao" element={<ProtectedRoute><PreachingPage /></ProtectedRoute>} />
       <Route path="/historico" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
+      <Route path="/sobre" element={<ProtectedRoute><AboutPage /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

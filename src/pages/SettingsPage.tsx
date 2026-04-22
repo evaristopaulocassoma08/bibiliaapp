@@ -351,6 +351,7 @@ const SettingsPage = () => {
             </div>
           </div>
           <Row icon={<Smartphone className="h-5 w-5 text-primary" />} label="Instalar App" onClick={handleInstallPWA} />
+          <Row icon={<Info className="h-5 w-5 text-primary" />} label="Sobre o desenvolvedor" onClick={() => navigate("/sobre")} />
         </Section>
 
         <button
