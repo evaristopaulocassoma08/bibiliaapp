@@ -1,6 +1,6 @@
 import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Mail,
   Phone,
@@ -9,11 +9,9 @@ import {
   Code2,
   Heart,
   Flame,
-  Github,
-  Globe,
   Sparkles,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import evaristoPhoto from "@/assets/evaristo.jpg";
 
 const AboutPage = () => {
   const phone = "921193115";
@@ -49,7 +47,8 @@ const AboutPage = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16 bg-gold-gradient">
+            <Avatar className="h-20 w-20 ring-2 ring-primary/30 shadow-lg shadow-primary/20">
+              <AvatarImage src={evaristoPhoto} alt="Evaristo Paulo Cassoma" className="object-cover" />
               <AvatarFallback className="bg-gold-gradient text-primary-foreground font-bold text-xl">
                 EP
               </AvatarFallback>
