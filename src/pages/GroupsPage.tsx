@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,7 @@ interface GroupMember {
 const GroupsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [groups, setGroups] = useState<Group[]>([]);
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,6 +36,20 @@ const GroupsPage = () => {
   useEffect(() => {
     loadGroups();
   }, []);
+
+  // Convite por link
+  useEffect(() => {
+    const code = searchParams.get("invite");
+    if (!code || !user) return;
+    (async () => {
+      const { data, error } = await supabase.rpc("join_group_by_invite", { _code: code });
+      if (error) { toast.error(error.message); return; }
+      toast.success("Convite aceito!");
+      setSearchParams({});
+      await loadGroups();
+      if (data) navigate(`/grupos/${data}`);
+    })();
+  }, [searchParams, user]);
 
   const loadGroups = async () => {
     const { data: groupData } = await supabase.from("groups").select("*").order("created_at");
