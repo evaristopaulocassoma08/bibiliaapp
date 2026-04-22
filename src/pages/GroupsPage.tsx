@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, MessageCircle, UserPlus, UserMinus, Crown, Globe, Search, Plus, Settings, X } from "lucide-react";
+import { Users, MessageCircle, UserPlus, UserMinus, Crown, Globe, Search, Plus, Settings, X, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Group {
@@ -22,6 +23,7 @@ interface GroupMember {
 
 const GroupsPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [groups, setGroups] = useState<Group[]>([]);
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -169,33 +171,37 @@ const GroupsPage = () => {
             </h2>
             <div className="grid gap-3">
               {joinedGroups.map((group) => (
-                <div key={group.id} className="glass-card rounded-xl p-4 border-primary/20">
+                <button
+                  key={group.id}
+                  onClick={() => navigate(`/grupos/${group.id}`)}
+                  className="w-full text-left glass-card rounded-xl p-4 border-primary/20 hover:bg-secondary/30 transition-colors"
+                >
                   <div className="flex items-center gap-3">
                     <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl shrink-0">
                       {group.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm text-foreground">{group.name}</h3>
+                      <h3 className="font-semibold text-sm text-foreground flex items-center gap-1.5">
+                        {group.name}
+                        {isOwner(group) && <Crown className="h-3.5 w-3.5 text-primary" />}
+                      </h3>
                       <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1"><Users className="h-3 w-3" />{memberCount(group.id)}</span>
-                        <span className="flex items-center gap-1 text-green-500"><MessageCircle className="h-3 w-3" />Ativo</span>
+                        <span className="flex items-center gap-1 text-primary"><MessageCircle className="h-3 w-3" />Abrir chat</span>
                       </div>
                     </div>
-                    <div className="flex gap-1">
-                      {isOwner(group) && (
-                        <button onClick={() => handleDelete(group.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors">
-                          <Settings className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleJoin(group.id)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                    {isOwner(group) && (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => { e.stopPropagation(); if (confirm("Apagar grupo?")) handleDelete(group.id); }}
+                        className="p-2 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
                       >
-                        <UserMinus className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
+                        <Trash2 className="h-4 w-4" />
+                      </span>
+                    )}
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </section>
