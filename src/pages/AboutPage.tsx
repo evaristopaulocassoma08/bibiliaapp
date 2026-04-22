@@ -101,8 +101,8 @@ const AboutPage = () => {
               rel="noopener noreferrer"
               className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors group"
             >
-              <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center group-hover:bg-green-500/20 transition-colors">
-                <MessageCircle className="h-5 w-5 text-green-500" />
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <MessageCircle className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted-foreground">WhatsApp</p>
