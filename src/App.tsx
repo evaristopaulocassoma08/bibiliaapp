@@ -10,6 +10,7 @@ import SearchPage from "./pages/SearchPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import NotesPage from "./pages/NotesPage";
 import GroupsPage from "./pages/GroupsPage";
+import GroupChatPage from "./pages/GroupChatPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import PreachingPage from "./pages/PreachingPage";
@@ -42,6 +43,7 @@ const AppRoutes = () => {
       <Route path="/favoritos" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
       <Route path="/notas" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
       <Route path="/grupos" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
+      <Route path="/grupos/:id" element={<ProtectedRoute><GroupChatPage /></ProtectedRoute>} />
       <Route path="/perfil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/configuracoes" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
       <Route path="/pregacao" element={<ProtectedRoute><PreachingPage /></ProtectedRoute>} />
