@@ -46,16 +46,18 @@ const GroupsPage = () => {
 
   const handleJoin = async (groupId: string) => {
     if (!user) return;
-    const isMember = members.some((m) => m.group_id === groupId && m.user_id === user.id);
-    
-    if (isMember) {
+    const isMemberAlready = members.some((m) => m.group_id === groupId && m.user_id === user.id);
+
+    if (isMemberAlready) {
       await supabase.from("group_members").delete().eq("group_id", groupId).eq("user_id", user.id);
       toast("Você saiu do grupo");
+      loadGroups();
     } else {
       await supabase.from("group_members").insert({ group_id: groupId, user_id: user.id });
       toast.success("Você entrou no grupo!");
+      await loadGroups();
+      navigate(`/grupos/${groupId}`);
     }
-    loadGroups();
   };
 
   const handleCreate = async () => {
