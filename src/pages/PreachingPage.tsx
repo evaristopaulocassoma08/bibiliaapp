@@ -141,6 +141,9 @@ const PreachingPage = () => {
       const finalTitle = titleMatch ? titleMatch[1].replace(/\*+/g, "").trim() : `Pregação: ${t}`;
       setSermon({ theme: t, title: finalTitle, content });
       trackSermon(t, finalTitle);
+      // Salva no histórico local IA (offline)
+      saveAISearch({ theme: t, title: finalTitle, content });
+      refreshLocal();
       toast.success("Pregação gerada!");
     } catch (error: any) {
       console.error(error);
