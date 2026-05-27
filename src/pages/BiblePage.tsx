@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
-import { addToReadingHistory } from "@/lib/bible-data";
+import {
+  addToReadingHistory,
+  CHAPTER_COLORS,
+  getChapterFavorite,
+  isChapterFavorite,
+  removeChapterFavorite,
+  setChapterFavorite,
+  type ChapterColor,
+} from "@/lib/bible-data";
 import { trackReading } from "@/lib/activity-tracker";
 import {
   getBooks,
@@ -10,7 +18,7 @@ import {
   type BibleBookRow,
   type BibleVerseRow,
 } from "@/lib/bible-service";
-import { ChevronRight, BookOpen, Download, Check, Heart } from "lucide-react";
+import { ChevronRight, BookOpen, Download, Check, Heart, Share2, Palette, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
