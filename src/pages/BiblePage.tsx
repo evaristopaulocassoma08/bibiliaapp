@@ -35,6 +35,8 @@ const BiblePage = () => {
   const [downloading, setDownloading] = useState<number | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadedMap, setDownloadedMap] = useState<Record<number, boolean>>({});
+  const [colorPicker, setColorPicker] = useState<{ chapter: number } | null>(null);
+  const [chapFavTick, setChapFavTick] = useState(0); // força re-render quando muda
 
   useEffect(() => {
     getBooks()
