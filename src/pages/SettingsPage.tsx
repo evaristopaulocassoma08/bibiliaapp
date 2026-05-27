@@ -354,13 +354,22 @@ const SettingsPage = () => {
           <Row icon={<Info className="h-5 w-5 text-primary" />} label="Sobre o desenvolvedor" onClick={() => navigate("/sobre")} />
         </Section>
 
-        <button
-          onClick={handleSignOut}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-destructive/10 text-destructive text-sm font-semibold hover:bg-destructive/20 transition-colors"
-        >
-          <LogOut className="h-4 w-4" />
-          Sair da Conta
-        </button>
+        {user ? (
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-destructive/10 text-destructive text-sm font-semibold hover:bg-destructive/20 transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            Sair da Conta
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate("/login")}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            Entrar / Criar conta
+          </button>
+        )}
       </div>
     </Layout>
   );
