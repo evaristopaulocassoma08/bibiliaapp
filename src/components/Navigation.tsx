@@ -121,13 +121,23 @@ export function TopNav() {
               {item.title}
             </NavLink>
           ))}
-          <button
-            onClick={() => { setOpen(false); handleSignOut(); }}
-            className="w-full flex items-center gap-3 px-4 py-3 text-destructive hover:bg-destructive/10 transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-            Sair
-          </button>
+          {user ? (
+            <button
+              onClick={() => { setOpen(false); handleSignOut(); }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              Sair
+            </button>
+          ) : (
+            <button
+              onClick={() => { setOpen(false); handleSignIn(); }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-primary font-medium hover:bg-primary/10 transition-colors"
+            >
+              <User className="h-4 w-4" />
+              Entrar / Criar conta
+            </button>
+          )}
         </nav>
       )}
     </header>
