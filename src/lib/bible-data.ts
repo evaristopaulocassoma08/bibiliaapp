@@ -296,3 +296,89 @@ export function addToReadingHistory(reference: string): void {
   filtered.unshift(reference);
   localStorage.setItem("bible-reading-history", JSON.stringify(filtered.slice(0, 50)));
 }
+
+// ============================================================
+//  CAPÍTULOS FAVORITOS — marcar capítulo com cor (offline)
+// ============================================================
+export type ChapterColor = "gold" | "blue" | "green" | "pink" | "purple";
+
+export interface ChapterFavorite {
+  bookId: number;
+  bookName: string;
+  chapter: number;
+  color: ChapterColor;
+  createdAt: string;
+}
+
+const CHAP_KEY = "bible-chapter-favorites";
+
+export function getChapterFavorites(): ChapterFavorite[] {
+  const s = localStorage.getItem(CHAP_KEY);
+  return s ? JSON.parse(s) : [];
+}
+
+export function getChapterFavorite(bookId: number, chapter: number): ChapterFavorite | undefined {
+  return getChapterFavorites().find((c) => c.bookId === bookId && c.chapter === chapter);
+}
+
+export function isChapterFavorite(bookId: number, chapter: number): boolean {
+  return !!getChapterFavorite(bookId, chapter);
+}
+
+export function setChapterFavorite(bookId: number, bookName: string, chapter: number, color: ChapterColor): void {
+  const list = getChapterFavorites().filter((c) => !(c.bookId === bookId && c.chapter === chapter));
+  list.unshift({ bookId, bookName, chapter, color, createdAt: new Date().toISOString() });
+  localStorage.setItem(CHAP_KEY, JSON.stringify(list));
+}
+
+export function removeChapterFavorite(bookId: number, chapter: number): void {
+  const list = getChapterFavorites().filter((c) => !(c.bookId === bookId && c.chapter === chapter));
+  localStorage.setItem(CHAP_KEY, JSON.stringify(list));
+}
+
+export const CHAPTER_COLORS: Record<ChapterColor, { btnBg: string; cellBg: string; label: string }> = {
+  gold:   { btnBg: "bg-yellow-500", cellBg: "bg-yellow-500/25 border-yellow-500/60 text-yellow-50",   label: "Ouro" },
+  blue:   { btnBg: "bg-blue-500",   cellBg: "bg-blue-500/25 border-blue-500/60 text-blue-50",         label: "Azul" },
+  green:  { btnBg: "bg-green-500",  cellBg: "bg-green-500/25 border-green-500/60 text-green-50",      label: "Verde" },
+  pink:   { btnBg: "bg-pink-500",   cellBg: "bg-pink-500/25 border-pink-500/60 text-pink-50",         label: "Rosa" },
+  purple: { btnBg: "bg-purple-500", cellBg: "bg-purple-500/25 border-purple-500/60 text-purple-50",   label: "Roxo" },
+};
+
+// ============================================================
+//  HISTÓRICO E FAVORITOS DE PESQUISAS IA
+// ============================================================
+export interface AISearchItem {
+  id: string;
+  theme: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  favorite?: boolean;
+}
+
+const AI_HIST_KEY = "ai-search-history";
+
+export function getAISearchHistory(): AISearchItem[] {
+  const s = localStorage.getItem(AI_HIST_KEY);
+  return s ? JSON.parse(s) : [];
+}
+
+export function saveAISearch(item: Omit<AISearchItem, "id" | "createdAt">): AISearchItem {
+  const entry: AISearchItem = { ...item, id: Date.now().toString(), createdAt: new Date().toISOString() };
+  const list = [entry, ...getAISearchHistory()].slice(0, 100);
+  localStorage.setItem(AI_HIST_KEY, JSON.stringify(list));
+  return entry;
+}
+
+export function toggleAIFavorite(id: string): boolean {
+  const list = getAISearchHistory();
+  const i = list.findIndex((x) => x.id === id);
+  if (i < 0) return false;
+  list[i].favorite = !list[i].favorite;
+  localStorage.setItem(AI_HIST_KEY, JSON.stringify(list));
+  return !!list[i].favorite;
+}
+
+export function deleteAISearch(id: string): void {
+  localStorage.setItem(AI_HIST_KEY, JSON.stringify(getAISearchHistory().filter((x) => x.id !== id)));
+}

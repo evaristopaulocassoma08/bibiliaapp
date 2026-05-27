@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
-import { addToReadingHistory } from "@/lib/bible-data";
+import {
+  addToReadingHistory,
+  CHAPTER_COLORS,
+  getChapterFavorite,
+  isChapterFavorite,
+  removeChapterFavorite,
+  setChapterFavorite,
+  type ChapterColor,
+} from "@/lib/bible-data";
 import { trackReading } from "@/lib/activity-tracker";
 import {
   getBooks,
@@ -10,7 +18,7 @@ import {
   type BibleBookRow,
   type BibleVerseRow,
 } from "@/lib/bible-service";
-import { ChevronRight, BookOpen, Download, Check, Heart } from "lucide-react";
+import { ChevronRight, BookOpen, Download, Check, Heart, Share2, Palette, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,6 +35,8 @@ const BiblePage = () => {
   const [downloading, setDownloading] = useState<number | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadedMap, setDownloadedMap] = useState<Record<number, boolean>>({});
+  const [colorPicker, setColorPicker] = useState<{ chapter: number } | null>(null);
+  const [chapFavTick, setChapFavTick] = useState(0); // força re-render quando muda
 
   useEffect(() => {
     getBooks()
@@ -180,17 +190,99 @@ const BiblePage = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
-              {Array.from({ length: selectedBook.chapters_count }, (_, i) => i + 1).map((ch) => (
-                <button
-                  key={ch}
-                  onClick={() => handleChapterSelect(ch)}
-                  className="aspect-square rounded-lg glass-card flex items-center justify-center text-sm font-medium text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
-                >
-                  {ch}
-                </button>
-              ))}
+            <p className="text-xs text-muted-foreground">
+              Toque para abrir · toque longo para marcar com cor ⭐
+            </p>
+
+            <div key={chapFavTick} className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
+              {Array.from({ length: selectedBook.chapters_count }, (_, i) => i + 1).map((ch) => {
+                const fav = getChapterFavorite(selectedBook.id, ch);
+                const colorClass = fav ? CHAPTER_COLORS[fav.color].cellBg : "glass-card text-foreground hover:bg-primary hover:text-primary-foreground";
+                let pressTimer: any;
+                const openPicker = () => setColorPicker({ chapter: ch });
+                return (
+                  <button
+                    key={ch}
+                    onClick={() => handleChapterSelect(ch)}
+                    onContextMenu={(e) => { e.preventDefault(); openPicker(); }}
+                    onTouchStart={() => { pressTimer = setTimeout(openPicker, 500); }}
+                    onTouchEnd={() => clearTimeout(pressTimer)}
+                    onTouchMove={() => clearTimeout(pressTimer)}
+                    className={`relative aspect-square rounded-lg border flex items-center justify-center text-sm font-medium transition-colors ${colorClass}`}
+                  >
+                    {ch}
+                    {fav && (
+                      <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-current opacity-80" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
+
+            {/* Picker de cores */}
+            {colorPicker && (
+              <div
+                onClick={() => setColorPicker(null)}
+                className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-fade-in"
+              >
+                <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm bg-card border border-border rounded-2xl p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-display font-semibold flex items-center gap-2 text-foreground">
+                      <Palette className="h-4 w-4 text-primary" />
+                      {selectedBook.name} {colorPicker.chapter}
+                    </h3>
+                    <button onClick={() => setColorPicker(null)} className="text-muted-foreground hover:text-foreground">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Escolha uma cor para marcar este capítulo</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {(Object.keys(CHAPTER_COLORS) as ChapterColor[]).map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => {
+                          setChapterFavorite(selectedBook.id, selectedBook.name, colorPicker.chapter, c);
+                          setChapFavTick((t) => t + 1);
+                          setColorPicker(null);
+                          toast.success(`Marcado com ${CHAPTER_COLORS[c].label.toLowerCase()}`);
+                        }}
+                        title={CHAPTER_COLORS[c].label}
+                        className={`h-10 w-10 rounded-full ${CHAPTER_COLORS[c].btnBg} ring-2 ring-transparent hover:ring-foreground/40 transition-all`}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex gap-2 pt-2 border-t border-border/50">
+                    <button
+                      onClick={async () => {
+                        const ref = `${selectedBook.name} ${colorPicker.chapter}`;
+                        const text = `Estou lendo ${ref} na BíbliaApp 📖`;
+                        try {
+                          if (navigator.share) await navigator.share({ title: ref, text });
+                          else { await navigator.clipboard.writeText(text); toast.success("Copiado!"); }
+                        } catch { /* cancelado */ }
+                        setColorPicker(null);
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
+                    >
+                      <Share2 className="h-4 w-4" /> Partilhar
+                    </button>
+                    {isChapterFavorite(selectedBook.id, colorPicker.chapter) && (
+                      <button
+                        onClick={() => {
+                          removeChapterFavorite(selectedBook.id, colorPicker.chapter);
+                          setChapFavTick((t) => t + 1);
+                          setColorPicker(null);
+                          toast("Marcação removida");
+                        }}
+                        className="flex-1 py-2 rounded-lg bg-destructive/15 text-destructive text-sm font-medium"
+                      >
+                        Remover cor
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </Layout>

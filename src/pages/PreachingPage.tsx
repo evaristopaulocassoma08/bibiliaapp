@@ -4,6 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { trackSermon } from "@/lib/activity-tracker";
 import {
+  saveAISearch,
+  getAISearchHistory,
+  toggleAIFavorite,
+  deleteAISearch,
+  type AISearchItem,
+} from "@/lib/bible-data";
+import {
   Sparkles,
   Send,
   BookOpen,
@@ -60,6 +67,9 @@ const PreachingPage = () => {
   const [newComment, setNewComment] = useState("");
   const [showComments, setShowComments] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [showLocalHistory, setShowLocalHistory] = useState(false);
+  const [localHistory, setLocalHistory] = useState<AISearchItem[]>(() => getAISearchHistory());
+  const refreshLocal = () => setLocalHistory(getAISearchHistory());
 
   // Carregar comentários quando uma pregação salva é exibida
   useEffect(() => {
@@ -131,6 +141,9 @@ const PreachingPage = () => {
       const finalTitle = titleMatch ? titleMatch[1].replace(/\*+/g, "").trim() : `Pregação: ${t}`;
       setSermon({ theme: t, title: finalTitle, content });
       trackSermon(t, finalTitle);
+      // Salva no histórico local IA (offline)
+      saveAISearch({ theme: t, title: finalTitle, content });
+      refreshLocal();
       toast.success("Pregação gerada!");
     } catch (error: any) {
       console.error(error);
@@ -289,15 +302,26 @@ const PreachingPage = () => {
               Tema → capítulos, versículos explicados e texto pronto para pregar
             </p>
           </div>
-          {user && (
+          <div className="flex gap-2 shrink-0">
             <button
-              onClick={loadSavedSermons}
-              className="px-3 py-2 rounded-xl bg-secondary text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors shrink-0 flex items-center gap-1.5"
+              onClick={() => { setShowLocalHistory((v) => !v); setShowSaved(false); refreshLocal(); }}
+              className="px-3 py-2 rounded-xl bg-secondary text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors flex items-center gap-1.5"
+              title="Histórico local (este aparelho)"
             >
               <BookOpen className="h-4 w-4" />
-              Salvas
+              Histórico
+              {localHistory.length > 0 && <span className="text-primary">({localHistory.length})</span>}
             </button>
-          )}
+            {user && (
+              <button
+                onClick={loadSavedSermons}
+                className="px-3 py-2 rounded-xl bg-secondary text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors flex items-center gap-1.5"
+              >
+                <Save className="h-4 w-4" />
+                Nuvem
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Input */}
@@ -485,6 +509,57 @@ const PreachingPage = () => {
               </div>
             )}
           </div>
+        )}
+
+        {/* Histórico Local IA */}
+        {showLocalHistory && (
+          <section className="space-y-3 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                Histórico local ({localHistory.length})
+              </h2>
+              <button onClick={() => setShowLocalHistory(false)} className="text-xs text-primary hover:underline flex items-center gap-1">
+                <ArrowLeft className="h-3 w-3" /> Voltar
+              </button>
+            </div>
+            {localHistory.length === 0 && (
+              <div className="glass-card rounded-xl p-6 text-center text-sm text-muted-foreground">
+                Nenhuma pesquisa de IA neste aparelho ainda.
+              </div>
+            )}
+            {localHistory.map((s) => (
+              <div key={s.id} className="glass-card rounded-xl p-4 flex items-center justify-between gap-3 hover:border-primary/20 transition-colors">
+                <button
+                  onClick={() => {
+                    setSermon({ theme: s.theme, title: s.title, content: s.content });
+                    setShowLocalHistory(false);
+                  }}
+                  className="flex-1 text-left min-w-0"
+                >
+                  <p className="text-sm font-semibold text-foreground truncate flex items-center gap-2">
+                    {s.favorite && <Sparkles className="h-3.5 w-3.5 text-primary fill-primary" />}
+                    {s.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">Tema: {s.theme}</p>
+                  <p className="text-[10px] text-muted-foreground/70 mt-1">{new Date(s.createdAt).toLocaleString("pt-BR")}</p>
+                </button>
+                <button
+                  onClick={() => { toggleAIFavorite(s.id); refreshLocal(); }}
+                  className="p-2 rounded-lg hover:bg-secondary transition-colors shrink-0"
+                  title={s.favorite ? "Remover dos favoritos" : "Favoritar"}
+                >
+                  <Sparkles className={`h-4 w-4 ${s.favorite ? "text-primary fill-primary" : "text-muted-foreground"}`} />
+                </button>
+                <button
+                  onClick={() => { deleteAISearch(s.id); refreshLocal(); toast("Removido"); }}
+                  className="p-2 rounded-lg text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+                  title="Excluir"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </section>
         )}
 
         {/* Saved Sermons list */}

@@ -48,7 +48,7 @@ export function BottomNav() {
 
 export function TopNav() {
   const [open, setOpen] = useState(false);
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -56,6 +56,8 @@ export function TopNav() {
     toast("Sessão encerrada");
     navigate("/login");
   };
+
+  const handleSignIn = () => navigate("/login");
 
   return (
     <header className="sticky top-0 z-50 glass-card border-b border-border/50">
@@ -83,9 +85,15 @@ export function TopNav() {
               {item.title}
             </NavLink>
           ))}
-          <button onClick={handleSignOut} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors ml-1">
-            <LogOut className="h-4 w-4" />
-          </button>
+          {user ? (
+            <button onClick={handleSignOut} title="Sair" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors ml-1">
+              <LogOut className="h-4 w-4" />
+            </button>
+          ) : (
+            <button onClick={handleSignIn} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm bg-primary text-primary-foreground hover:opacity-90 transition-opacity ml-1">
+              Entrar
+            </button>
+          )}
         </nav>
 
         {/* Mobile menu button */}
@@ -113,13 +121,23 @@ export function TopNav() {
               {item.title}
             </NavLink>
           ))}
-          <button
-            onClick={() => { setOpen(false); handleSignOut(); }}
-            className="w-full flex items-center gap-3 px-4 py-3 text-destructive hover:bg-destructive/10 transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-            Sair
-          </button>
+          {user ? (
+            <button
+              onClick={() => { setOpen(false); handleSignOut(); }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              Sair
+            </button>
+          ) : (
+            <button
+              onClick={() => { setOpen(false); handleSignIn(); }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-primary font-medium hover:bg-primary/10 transition-colors"
+            >
+              <User className="h-4 w-4" />
+              Entrar / Criar conta
+            </button>
+          )}
         </nav>
       )}
     </header>
