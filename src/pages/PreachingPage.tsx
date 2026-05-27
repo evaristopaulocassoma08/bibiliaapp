@@ -511,6 +511,57 @@ const PreachingPage = () => {
           </div>
         )}
 
+        {/* Histórico Local IA */}
+        {showLocalHistory && (
+          <section className="space-y-3 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                Histórico local ({localHistory.length})
+              </h2>
+              <button onClick={() => setShowLocalHistory(false)} className="text-xs text-primary hover:underline flex items-center gap-1">
+                <ArrowLeft className="h-3 w-3" /> Voltar
+              </button>
+            </div>
+            {localHistory.length === 0 && (
+              <div className="glass-card rounded-xl p-6 text-center text-sm text-muted-foreground">
+                Nenhuma pesquisa de IA neste aparelho ainda.
+              </div>
+            )}
+            {localHistory.map((s) => (
+              <div key={s.id} className="glass-card rounded-xl p-4 flex items-center justify-between gap-3 hover:border-primary/20 transition-colors">
+                <button
+                  onClick={() => {
+                    setSermon({ theme: s.theme, title: s.title, content: s.content });
+                    setShowLocalHistory(false);
+                  }}
+                  className="flex-1 text-left min-w-0"
+                >
+                  <p className="text-sm font-semibold text-foreground truncate flex items-center gap-2">
+                    {s.favorite && <Sparkles className="h-3.5 w-3.5 text-primary fill-primary" />}
+                    {s.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">Tema: {s.theme}</p>
+                  <p className="text-[10px] text-muted-foreground/70 mt-1">{new Date(s.createdAt).toLocaleString("pt-BR")}</p>
+                </button>
+                <button
+                  onClick={() => { toggleAIFavorite(s.id); refreshLocal(); }}
+                  className="p-2 rounded-lg hover:bg-secondary transition-colors shrink-0"
+                  title={s.favorite ? "Remover dos favoritos" : "Favoritar"}
+                >
+                  <Sparkles className={`h-4 w-4 ${s.favorite ? "text-primary fill-primary" : "text-muted-foreground"}`} />
+                </button>
+                <button
+                  onClick={() => { deleteAISearch(s.id); refreshLocal(); toast("Removido"); }}
+                  className="p-2 rounded-lg text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+                  title="Excluir"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </section>
+        )}
+
         {/* Saved Sermons list */}
         {showSaved && (
           <section className="space-y-3 animate-fade-in">
