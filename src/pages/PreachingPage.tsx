@@ -4,6 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { trackSermon } from "@/lib/activity-tracker";
 import {
+  saveAISearch,
+  getAISearchHistory,
+  toggleAIFavorite,
+  deleteAISearch,
+  type AISearchItem,
+} from "@/lib/bible-data";
+import {
   Sparkles,
   Send,
   BookOpen,
