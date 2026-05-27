@@ -85,9 +85,15 @@ export function TopNav() {
               {item.title}
             </NavLink>
           ))}
-          <button onClick={handleSignOut} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors ml-1">
-            <LogOut className="h-4 w-4" />
-          </button>
+          {user ? (
+            <button onClick={handleSignOut} title="Sair" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors ml-1">
+              <LogOut className="h-4 w-4" />
+            </button>
+          ) : (
+            <button onClick={handleSignIn} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm bg-primary text-primary-foreground hover:opacity-90 transition-opacity ml-1">
+              Entrar
+            </button>
+          )}
         </nav>
 
         {/* Mobile menu button */}
