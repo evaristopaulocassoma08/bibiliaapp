@@ -67,6 +67,9 @@ const PreachingPage = () => {
   const [newComment, setNewComment] = useState("");
   const [showComments, setShowComments] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [showLocalHistory, setShowLocalHistory] = useState(false);
+  const [localHistory, setLocalHistory] = useState<AISearchItem[]>(() => getAISearchHistory());
+  const refreshLocal = () => setLocalHistory(getAISearchHistory());
 
   // Carregar comentários quando uma pregação salva é exibida
   useEffect(() => {
