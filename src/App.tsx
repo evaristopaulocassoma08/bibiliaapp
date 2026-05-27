@@ -37,18 +37,20 @@ const AppRoutes = () => {
         path="/login"
         element={loading ? <div className="min-h-screen bg-background flex items-center justify-center"><div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div> : user ? <Navigate to="/" replace /> : <AuthPage />}
       />
-      <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-      <Route path="/biblia" element={<ProtectedRoute><BiblePage /></ProtectedRoute>} />
-      <Route path="/buscar" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
-      <Route path="/favoritos" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
-      <Route path="/notas" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
+      {/* Modo anônimo: leitura, favoritos, notas e perfil funcionam sem login */}
+      <Route path="/" element={<Index />} />
+      <Route path="/biblia" element={<BiblePage />} />
+      <Route path="/buscar" element={<SearchPage />} />
+      <Route path="/favoritos" element={<FavoritesPage />} />
+      <Route path="/notas" element={<NotesPage />} />
+      <Route path="/perfil" element={<ProfilePage />} />
+      <Route path="/configuracoes" element={<SettingsPage />} />
+      <Route path="/historico" element={<HistoryPage />} />
+      <Route path="/sobre" element={<AboutPage />} />
+      {/* Recursos sociais ainda exigem login */}
       <Route path="/grupos" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
       <Route path="/grupos/:id" element={<ProtectedRoute><GroupChatPage /></ProtectedRoute>} />
-      <Route path="/perfil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-      <Route path="/configuracoes" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
       <Route path="/pregacao" element={<ProtectedRoute><PreachingPage /></ProtectedRoute>} />
-      <Route path="/historico" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
-      <Route path="/sobre" element={<ProtectedRoute><AboutPage /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
