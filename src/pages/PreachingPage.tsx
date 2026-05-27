@@ -302,15 +302,26 @@ const PreachingPage = () => {
               Tema → capítulos, versículos explicados e texto pronto para pregar
             </p>
           </div>
-          {user && (
+          <div className="flex gap-2 shrink-0">
             <button
-              onClick={loadSavedSermons}
-              className="px-3 py-2 rounded-xl bg-secondary text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors shrink-0 flex items-center gap-1.5"
+              onClick={() => { setShowLocalHistory((v) => !v); setShowSaved(false); refreshLocal(); }}
+              className="px-3 py-2 rounded-xl bg-secondary text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors flex items-center gap-1.5"
+              title="Histórico local (este aparelho)"
             >
               <BookOpen className="h-4 w-4" />
-              Salvas
+              Histórico
+              {localHistory.length > 0 && <span className="text-primary">({localHistory.length})</span>}
             </button>
-          )}
+            {user && (
+              <button
+                onClick={loadSavedSermons}
+                className="px-3 py-2 rounded-xl bg-secondary text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors flex items-center gap-1.5"
+              >
+                <Save className="h-4 w-4" />
+                Nuvem
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Input */}
