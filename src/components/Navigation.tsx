@@ -48,7 +48,7 @@ export function BottomNav() {
 
 export function TopNav() {
   const [open, setOpen] = useState(false);
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -56,6 +56,8 @@ export function TopNav() {
     toast("Sessão encerrada");
     navigate("/login");
   };
+
+  const handleSignIn = () => navigate("/login");
 
   return (
     <header className="sticky top-0 z-50 glass-card border-b border-border/50">
