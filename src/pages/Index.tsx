@@ -3,6 +3,7 @@ import { Heart, Share2, RefreshCw, BookOpen, Search, Users, StickyNote, ChevronR
 import { getDailyVerse, toggleFavorite, isFavorite, dailyVerses, getReadingHistory, getFavorites } from "@/lib/bible-data";
 import type { BibleVerse } from "@/lib/bible-data";
 import { Layout } from "@/components/Layout";
+import { MotivationalHighlight } from "@/components/MotivationalHighlight";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
