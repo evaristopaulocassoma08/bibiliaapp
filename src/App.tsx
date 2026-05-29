@@ -17,6 +17,8 @@ import PreachingPage from "./pages/PreachingPage";
 import HistoryPage from "./pages/HistoryPage";
 import AuthPage from "./pages/AuthPage";
 import AboutPage from "./pages/AboutPage";
+import ChurchesPage from "./pages/ChurchesPage";
+import ChurchDetailPage from "./pages/ChurchDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
