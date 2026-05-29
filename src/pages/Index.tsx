@@ -75,6 +75,8 @@ const Index = () => {
           </div>
         </div>
 
+        <MotivationalHighlight />
+
         {/* Verse of the Day */}
         <section className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card p-6 space-y-4">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
