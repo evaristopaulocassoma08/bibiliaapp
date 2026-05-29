@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Book, Heart, Home, Users, Search, StickyNote, Menu, X, User, Settings, Flame, Sparkles, LogOut } from "lucide-react";
+import { Book, Heart, Home, Users, Search, StickyNote, Menu, X, User, Settings, Flame, Sparkles, LogOut, Church } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +12,7 @@ const navItems = [
   { title: "Pregação IA", url: "/pregacao", icon: Sparkles },
   { title: "Favoritos", url: "/favoritos", icon: Heart },
   { title: "Notas", url: "/notas", icon: StickyNote },
+  { title: "Igrejas", url: "/igrejas", icon: Church },
   { title: "Grupos", url: "/grupos", icon: Users },
   { title: "Perfil", url: "/perfil", icon: User },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
