@@ -17,6 +17,8 @@ import PreachingPage from "./pages/PreachingPage";
 import HistoryPage from "./pages/HistoryPage";
 import AuthPage from "./pages/AuthPage";
 import AboutPage from "./pages/AboutPage";
+import ChurchesPage from "./pages/ChurchesPage";
+import ChurchDetailPage from "./pages/ChurchDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +49,8 @@ const AppRoutes = () => {
       <Route path="/configuracoes" element={<SettingsPage />} />
       <Route path="/historico" element={<HistoryPage />} />
       <Route path="/sobre" element={<AboutPage />} />
+      <Route path="/igrejas" element={<ChurchesPage />} />
+      <Route path="/igrejas/:id" element={<ChurchDetailPage />} />
       {/* Recursos sociais ainda exigem login */}
       <Route path="/grupos" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
       <Route path="/grupos/:id" element={<ProtectedRoute><GroupChatPage /></ProtectedRoute>} />

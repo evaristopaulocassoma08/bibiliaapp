@@ -82,6 +82,142 @@ export type Database = {
           },
         ]
       }
+      church_events: {
+        Row: {
+          church_id: string
+          created_at: string
+          description: string | null
+          ends_at: string | null
+          id: string
+          location: string | null
+          recurrence: string | null
+          starts_at: string
+          title: string
+        }
+        Insert: {
+          church_id: string
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          location?: string | null
+          recurrence?: string | null
+          starts_at: string
+          title: string
+        }
+        Update: {
+          church_id?: string
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          location?: string | null
+          recurrence?: string | null
+          starts_at?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "church_events_church_id_fkey"
+            columns: ["church_id"]
+            isOneToOne: false
+            referencedRelation: "churches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      church_ministries: {
+        Row: {
+          category: string
+          church_id: string
+          created_at: string
+          description: string | null
+          id: string
+          leader_contact: string | null
+          leader_name: string | null
+          name: string
+          schedule: string | null
+        }
+        Insert: {
+          category?: string
+          church_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          leader_contact?: string | null
+          leader_name?: string | null
+          name: string
+          schedule?: string | null
+        }
+        Update: {
+          category?: string
+          church_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          leader_contact?: string | null
+          leader_name?: string | null
+          name?: string
+          schedule?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "church_ministries_church_id_fkey"
+            columns: ["church_id"]
+            isOneToOne: false
+            referencedRelation: "churches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      churches: {
+        Row: {
+          address: string | null
+          created_at: string
+          created_by: string
+          denomination: string | null
+          description: string | null
+          id: string
+          latitude: number | null
+          leader_contact: string | null
+          leader_name: string | null
+          longitude: number | null
+          name: string
+          photo_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          created_by: string
+          denomination?: string | null
+          description?: string | null
+          id?: string
+          latitude?: number | null
+          leader_contact?: string | null
+          leader_name?: string | null
+          longitude?: number | null
+          name: string
+          photo_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          created_by?: string
+          denomination?: string | null
+          description?: string | null
+          id?: string
+          latitude?: number | null
+          leader_contact?: string | null
+          leader_name?: string | null
+          longitude?: number | null
+          name?: string
+          photo_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string
@@ -355,6 +491,42 @@ export type Database = {
         }
         Relationships: []
       }
+      motivational_chapters: {
+        Row: {
+          book_name: string
+          chapter: number
+          created_at: string
+          created_by: string
+          featured: boolean
+          id: string
+          message: string
+          title: string
+          verse_reference: string | null
+        }
+        Insert: {
+          book_name: string
+          chapter: number
+          created_at?: string
+          created_by: string
+          featured?: boolean
+          id?: string
+          message: string
+          title: string
+          verse_reference?: string | null
+        }
+        Update: {
+          book_name?: string
+          chapter?: number
+          created_at?: string
+          created_by?: string
+          featured?: boolean
+          id?: string
+          message?: string
+          title?: string
+          verse_reference?: string | null
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           content: string | null
@@ -477,11 +649,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_group_member: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
@@ -493,7 +693,7 @@ export type Database = {
       join_group_by_invite: { Args: { _code: string }; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "church_leader" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -620,6 +820,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "church_leader", "user"],
+    },
   },
 } as const

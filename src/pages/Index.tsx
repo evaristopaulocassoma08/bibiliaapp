@@ -3,6 +3,7 @@ import { Heart, Share2, RefreshCw, BookOpen, Search, Users, StickyNote, ChevronR
 import { getDailyVerse, toggleFavorite, isFavorite, dailyVerses, getReadingHistory, getFavorites } from "@/lib/bible-data";
 import type { BibleVerse } from "@/lib/bible-data";
 import { Layout } from "@/components/Layout";
+import { MotivationalHighlight } from "@/components/MotivationalHighlight";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -73,6 +74,8 @@ const Index = () => {
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Livros</p>
           </div>
         </div>
+
+        <MotivationalHighlight />
 
         {/* Verse of the Day */}
         <section className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card p-6 space-y-4">
