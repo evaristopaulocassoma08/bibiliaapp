@@ -49,6 +49,8 @@ const AppRoutes = () => {
       <Route path="/configuracoes" element={<SettingsPage />} />
       <Route path="/historico" element={<HistoryPage />} />
       <Route path="/sobre" element={<AboutPage />} />
+      <Route path="/igrejas" element={<ChurchesPage />} />
+      <Route path="/igrejas/:id" element={<ChurchDetailPage />} />
       {/* Recursos sociais ainda exigem login */}
       <Route path="/grupos" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
       <Route path="/grupos/:id" element={<ProtectedRoute><GroupChatPage /></ProtectedRoute>} />
