@@ -90,7 +90,7 @@ const FavoritesPage = () => {
               Favoritos
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              {favorites.length} versículo{favorites.length !== 1 ? "s" : ""} salvo{favorites.length !== 1 ? "s" : ""}
+              {favorites.length} versículo{favorites.length !== 1 ? "s" : ""} · {chapterFavs.length} capítulo{chapterFavs.length !== 1 ? "s" : ""}
               {user && " · sincronizado"}
             </p>
           </div>
