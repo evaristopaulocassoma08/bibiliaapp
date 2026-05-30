@@ -179,6 +179,16 @@ const AuthPage = () => {
             {isLogin ? "Criar conta" : "Entrar"}
           </button>
         </p>
+
+        <button
+          onClick={() => navigate("/")}
+          className="w-full py-3 rounded-xl border border-border bg-transparent text-sm text-muted-foreground hover:bg-secondary/50 transition-colors"
+        >
+          Continuar sem conta (modo anônimo)
+        </button>
+        <p className="text-center text-xs text-muted-foreground/70 -mt-4">
+          Bíblia, favoritos e notas funcionam offline no seu aparelho
+        </p>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Church, MapPin, Plus, X, Search, Phone, User as UserIcon, Shield } from "lucide-react";
+import { Church, MapPin, Plus, X, Search, Phone, User as UserIcon, Shield, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 interface ChurchRow {
@@ -111,7 +111,22 @@ const ChurchesPage = () => {
             </div>
             <input className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-sm" placeholder="Nome do Líder / Pároco" value={form.leader_name} onChange={e => setForm({...form, leader_name: e.target.value})} />
             <input className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-sm" placeholder="Contacto do Líder (telefone/email)" value={form.leader_contact} onChange={e => setForm({...form, leader_contact: e.target.value})} />
-            <input className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-sm" placeholder="URL da foto da igreja" value={form.photo_url} onChange={e => setForm({...form, photo_url: e.target.value})} />
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 px-4 py-3 rounded-xl bg-secondary border border-dashed border-border text-sm cursor-pointer hover:border-primary/40">
+                <Upload className="h-4 w-4 text-primary" />
+                <span className="text-muted-foreground">{form.photo_url ? "Trocar foto da igreja" : "Enviar foto da igreja"}</span>
+                <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                  const file = e.target.files?.[0]; if (!file || !user) return;
+                  const path = `${user.id}/${Date.now()}-${file.name}`;
+                  const { error } = await supabase.storage.from("church-photos").upload(path, file);
+                  if (error) { toast.error(error.message); return; }
+                  const { data } = supabase.storage.from("church-photos").getPublicUrl(path);
+                  setForm({ ...form, photo_url: data.publicUrl });
+                  toast.success("Foto enviada!");
+                }} />
+              </label>
+              {form.photo_url && <img src={form.photo_url} alt="Preview" className="w-full h-32 object-cover rounded-xl" />}
+            </div>
             <button onClick={handleCreate} className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 shadow-lg shadow-primary/20">
               Cadastrar Igreja
             </button>

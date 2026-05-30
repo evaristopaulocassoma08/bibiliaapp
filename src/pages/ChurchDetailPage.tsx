@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Church, MapPin, Phone, Calendar, Users, Plus, ArrowLeft, Clock, User as UserIcon, Trash2, Navigation as NavIcon } from "lucide-react";
+import { Church, MapPin, Phone, Calendar, Users, Plus, ArrowLeft, Clock, User as UserIcon, Trash2, Navigation as NavIcon, MessageCircle, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 interface ChurchData {
@@ -14,6 +14,7 @@ interface ChurchData {
 }
 interface Ministry { id: string; church_id: string; name: string; category: string; description: string | null; leader_name: string | null; leader_contact: string | null; schedule: string | null; }
 interface Event { id: string; church_id: string; title: string; description: string | null; starts_at: string; ends_at: string | null; location: string | null; recurrence: string | null; }
+interface GroupRow { id: string; name: string; description: string | null; icon: string | null; church_id: string | null; }
 
 const CATEGORIES = [
   { value: "coro", label: "🎵 Coro" },
@@ -33,24 +34,29 @@ const ChurchDetailPage = () => {
   const [church, setChurch] = useState<ChurchData | null>(null);
   const [ministries, setMinistries] = useState<Ministry[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
-  const [tab, setTab] = useState<"info" | "ministerios" | "eventos">("info");
+  const [groups, setGroups] = useState<GroupRow[]>([]);
+  const [tab, setTab] = useState<"info" | "ministerios" | "eventos" | "grupos">("info");
   const [showMin, setShowMin] = useState(false);
   const [showEvt, setShowEvt] = useState(false);
+  const [showGrp, setShowGrp] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   const [minForm, setMinForm] = useState({ name: "", category: "ministerio", description: "", leader_name: "", leader_contact: "", schedule: "" });
   const [evtForm, setEvtForm] = useState({ title: "", description: "", starts_at: "", ends_at: "", location: "", recurrence: "" });
+  const [grpForm, setGrpForm] = useState({ name: "", description: "", icon: "⛪" });
 
   const load = async () => {
     if (!id) return;
-    const [{ data: c }, { data: m }, { data: e }] = await Promise.all([
+    const [{ data: c }, { data: m }, { data: e }, { data: g }] = await Promise.all([
       supabase.from("churches").select("*").eq("id", id).maybeSingle(),
       supabase.from("church_ministries").select("*").eq("church_id", id).order("created_at"),
       supabase.from("church_events").select("*").eq("church_id", id).order("starts_at"),
+      supabase.from("groups").select("id,name,description,icon,church_id").eq("church_id", id).order("created_at"),
     ]);
     setChurch(c as ChurchData);
     setMinistries((m as Ministry[]) || []);
     setEvents((e as Event[]) || []);
+    setGroups((g as GroupRow[]) || []);
     if (user) {
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
       setIsAdmin(!!roles?.some((r: any) => r.role === "admin"));
@@ -98,6 +104,32 @@ const ChurchDetailPage = () => {
     load();
   };
 
+  const addGroup = async () => {
+    if (!user) { toast.error("Faça login"); return; }
+    if (!grpForm.name.trim() || !id) return;
+    const { data, error } = await supabase.from("groups").insert({
+      name: grpForm.name, description: grpForm.description || null, icon: grpForm.icon,
+      owner_id: user.id, church_id: id, is_public: true,
+    }).select().single();
+    if (error) { toast.error(error.message); return; }
+    await supabase.from("group_members").insert({ group_id: data.id, user_id: user.id, role: "admin" });
+    toast.success("Grupo criado!");
+    setGrpForm({ name: "", description: "", icon: "⛪" });
+    setShowGrp(false);
+    load();
+  };
+
+  const uploadChurchPhoto = async (file: File) => {
+    if (!user || !church) return;
+    const path = `${user.id}/${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("church-photos").upload(path, file);
+    if (error) { toast.error(error.message); return; }
+    const { data } = supabase.storage.from("church-photos").getPublicUrl(path);
+    await supabase.from("churches").update({ photo_url: data.publicUrl }).eq("id", church.id);
+    toast.success("Foto atualizada!");
+    load();
+  };
+
   if (!church) return <Layout><div className="flex justify-center py-10"><div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div></Layout>;
 
   return (
@@ -108,13 +140,21 @@ const ChurchDetailPage = () => {
         </button>
 
         <div className="glass-card rounded-2xl overflow-hidden">
-          {church.photo_url ? (
-            <img src={church.photo_url} alt={church.name} className="w-full h-48 object-cover" />
-          ) : (
-            <div className="w-full h-32 bg-primary/10 flex items-center justify-center">
-              <Church className="h-16 w-16 text-primary/50" />
-            </div>
-          )}
+          <div className="relative">
+            {church.photo_url ? (
+              <img src={church.photo_url} alt={church.name} className="w-full h-48 object-cover" />
+            ) : (
+              <div className="w-full h-32 bg-primary/10 flex items-center justify-center">
+                <Church className="h-16 w-16 text-primary/50" />
+              </div>
+            )}
+            {canManage && (
+              <label className="absolute bottom-2 right-2 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-background/80 backdrop-blur text-xs cursor-pointer hover:bg-background">
+                <Upload className="h-3 w-3" /> Trocar foto
+                <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) uploadChurchPhoto(f); }} />
+              </label>
+            )}
+          </div>
           <div className="p-5 space-y-2">
             <h1 className="text-2xl font-display font-bold text-foreground">{church.name}</h1>
             {church.denomination && <p className="text-sm text-primary">{church.denomination}</p>}
@@ -122,10 +162,10 @@ const ChurchDetailPage = () => {
           </div>
         </div>
 
-        <div className="flex gap-2 border-b border-border">
-          {(["info", "ministerios", "eventos"] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${tab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}>
-              {t === "info" ? "Informações" : t === "ministerios" ? `Ministérios (${ministries.length})` : `Eventos (${events.length})`}
+        <div className="flex gap-2 border-b border-border overflow-x-auto">
+          {(["info", "ministerios", "eventos", "grupos"] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)} className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${tab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}>
+              {t === "info" ? "Informações" : t === "ministerios" ? `Ministérios (${ministries.length})` : t === "eventos" ? `Eventos (${events.length})` : `Grupos (${groups.length})`}
             </button>
           ))}
         </div>
@@ -256,6 +296,40 @@ const ChurchDetailPage = () => {
               </div>
             ))}
             {events.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">Nenhum evento agendado</p>}
+          </div>
+        )}
+
+        {tab === "grupos" && (
+          <div className="space-y-3">
+            {user && (
+              <button onClick={() => setShowGrp(!showGrp)} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-primary/40 text-sm text-primary hover:bg-primary/5">
+                <Plus className="h-4 w-4" /> Novo grupo de conversa
+              </button>
+            )}
+            {!user && (
+              <p className="text-center text-xs text-muted-foreground py-4">Faça login para criar ou entrar em grupos de conversa</p>
+            )}
+            {showGrp && (
+              <div className="glass-card rounded-xl p-4 space-y-3 border-primary/20">
+                <div className="flex gap-2">
+                  <input className="w-16 px-3 py-2.5 rounded-lg bg-secondary border border-border text-sm text-center" maxLength={2} value={grpForm.icon} onChange={e => setGrpForm({...grpForm, icon: e.target.value})} />
+                  <input className="flex-1 px-3 py-2.5 rounded-lg bg-secondary border border-border text-sm" placeholder="Nome do grupo (ex: Coro Jovem - Conversas)" value={grpForm.name} onChange={e => setGrpForm({...grpForm, name: e.target.value})} />
+                </div>
+                <textarea rows={2} className="w-full px-3 py-2.5 rounded-lg bg-secondary border border-border text-sm resize-none" placeholder="Descrição" value={grpForm.description} onChange={e => setGrpForm({...grpForm, description: e.target.value})} />
+                <button onClick={addGroup} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">Criar grupo</button>
+              </div>
+            )}
+            {groups.map(g => (
+              <button key={g.id} onClick={() => navigate(`/grupos/${g.id}`)} className="w-full glass-card rounded-xl p-4 text-left hover:border-primary/30 transition-colors flex items-center gap-3">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl shrink-0">{g.icon || "⛪"}</div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-foreground truncate">{g.name}</h3>
+                  {g.description && <p className="text-xs text-muted-foreground truncate">{g.description}</p>}
+                </div>
+                <MessageCircle className="h-4 w-4 text-primary" />
+              </button>
+            ))}
+            {groups.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">Nenhum grupo de conversa nesta igreja ainda</p>}
           </div>
         )}
       </div>
