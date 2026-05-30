@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
-import { getFavorites, toggleFavorite, syncFavoritesFromCloud } from "@/lib/bible-data";
+import {
+  getFavorites, toggleFavorite, syncFavoritesFromCloud,
+  getChapterFavorites, removeChapterFavorite, CHAPTER_COLORS,
+  type ChapterFavorite,
+} from "@/lib/bible-data";
 import type { BibleVerse } from "@/lib/bible-data";
-import { Heart, Trash2, Share2, BookOpen, Filter, Search, Download, Copy, RefreshCw } from "lucide-react";
+import { Heart, Trash2, Share2, BookOpen, Filter, Search, Download, Copy, RefreshCw, Palette, StickyNote } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -12,6 +16,8 @@ const FavoritesPage = () => {
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
   const [syncing, setSyncing] = useState(false);
+  const [chapterFavs, setChapterFavs] = useState<ChapterFavorite[]>([]);
+  const [tab, setTab] = useState<"versiculos" | "capitulos">("versiculos");
 
   const loadCloud = async () => {
     setSyncing(true);
@@ -22,9 +28,16 @@ const FavoritesPage = () => {
 
   useEffect(() => {
     setFavorites(getFavorites());
+    setChapterFavs(getChapterFavorites());
     if (user) loadCloud();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  const removeChapter = (bookId: number, chapter: number) => {
+    removeChapterFavorite(bookId, chapter);
+    setChapterFavs(getChapterFavorites());
+    toast("Capítulo removido");
+  };
 
   const filtered = favorites.filter((v) => {
     if (filter && v.book !== filter) return false;
