@@ -298,6 +298,40 @@ const ChurchDetailPage = () => {
             {events.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">Nenhum evento agendado</p>}
           </div>
         )}
+
+        {tab === "grupos" && (
+          <div className="space-y-3">
+            {user && (
+              <button onClick={() => setShowGrp(!showGrp)} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-primary/40 text-sm text-primary hover:bg-primary/5">
+                <Plus className="h-4 w-4" /> Novo grupo de conversa
+              </button>
+            )}
+            {!user && (
+              <p className="text-center text-xs text-muted-foreground py-4">Faça login para criar ou entrar em grupos de conversa</p>
+            )}
+            {showGrp && (
+              <div className="glass-card rounded-xl p-4 space-y-3 border-primary/20">
+                <div className="flex gap-2">
+                  <input className="w-16 px-3 py-2.5 rounded-lg bg-secondary border border-border text-sm text-center" maxLength={2} value={grpForm.icon} onChange={e => setGrpForm({...grpForm, icon: e.target.value})} />
+                  <input className="flex-1 px-3 py-2.5 rounded-lg bg-secondary border border-border text-sm" placeholder="Nome do grupo (ex: Coro Jovem - Conversas)" value={grpForm.name} onChange={e => setGrpForm({...grpForm, name: e.target.value})} />
+                </div>
+                <textarea rows={2} className="w-full px-3 py-2.5 rounded-lg bg-secondary border border-border text-sm resize-none" placeholder="Descrição" value={grpForm.description} onChange={e => setGrpForm({...grpForm, description: e.target.value})} />
+                <button onClick={addGroup} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">Criar grupo</button>
+              </div>
+            )}
+            {groups.map(g => (
+              <button key={g.id} onClick={() => navigate(`/grupos/${g.id}`)} className="w-full glass-card rounded-xl p-4 text-left hover:border-primary/30 transition-colors flex items-center gap-3">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl shrink-0">{g.icon || "⛪"}</div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-foreground truncate">{g.name}</h3>
+                  {g.description && <p className="text-xs text-muted-foreground truncate">{g.description}</p>}
+                </div>
+                <MessageCircle className="h-4 w-4 text-primary" />
+              </button>
+            ))}
+            {groups.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">Nenhum grupo de conversa nesta igreja ainda</p>}
+          </div>
+        )}
       </div>
     </Layout>
   );
