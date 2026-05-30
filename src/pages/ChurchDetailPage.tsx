@@ -140,13 +140,21 @@ const ChurchDetailPage = () => {
         </button>
 
         <div className="glass-card rounded-2xl overflow-hidden">
-          {church.photo_url ? (
-            <img src={church.photo_url} alt={church.name} className="w-full h-48 object-cover" />
-          ) : (
-            <div className="w-full h-32 bg-primary/10 flex items-center justify-center">
-              <Church className="h-16 w-16 text-primary/50" />
-            </div>
-          )}
+          <div className="relative">
+            {church.photo_url ? (
+              <img src={church.photo_url} alt={church.name} className="w-full h-48 object-cover" />
+            ) : (
+              <div className="w-full h-32 bg-primary/10 flex items-center justify-center">
+                <Church className="h-16 w-16 text-primary/50" />
+              </div>
+            )}
+            {canManage && (
+              <label className="absolute bottom-2 right-2 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-background/80 backdrop-blur text-xs cursor-pointer hover:bg-background">
+                <Upload className="h-3 w-3" /> Trocar foto
+                <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) uploadChurchPhoto(f); }} />
+              </label>
+            )}
+          </div>
           <div className="p-5 space-y-2">
             <h1 className="text-2xl font-display font-bold text-foreground">{church.name}</h1>
             {church.denomination && <p className="text-sm text-primary">{church.denomination}</p>}
@@ -154,10 +162,10 @@ const ChurchDetailPage = () => {
           </div>
         </div>
 
-        <div className="flex gap-2 border-b border-border">
-          {(["info", "ministerios", "eventos"] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${tab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}>
-              {t === "info" ? "Informações" : t === "ministerios" ? `Ministérios (${ministries.length})` : `Eventos (${events.length})`}
+        <div className="flex gap-2 border-b border-border overflow-x-auto">
+          {(["info", "ministerios", "eventos", "grupos"] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)} className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${tab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}>
+              {t === "info" ? "Informações" : t === "ministerios" ? `Ministérios (${ministries.length})` : t === "eventos" ? `Eventos (${events.length})` : `Grupos (${groups.length})`}
             </button>
           ))}
         </div>
