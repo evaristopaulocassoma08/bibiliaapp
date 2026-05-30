@@ -263,7 +263,6 @@ const FavoritesPage = () => {
               </div>
             ))}
           </div>
-          </div>
         )}
         </>
         )}
