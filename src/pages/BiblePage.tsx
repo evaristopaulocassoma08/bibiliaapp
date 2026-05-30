@@ -7,7 +7,11 @@ import {
   isChapterFavorite,
   removeChapterFavorite,
   setChapterFavorite,
+  updateChapterNote,
+  toggleFavorite,
+  isFavorite,
   type ChapterColor,
+  type BibleVerse,
 } from "@/lib/bible-data";
 import { trackReading } from "@/lib/activity-tracker";
 import {
@@ -18,9 +22,8 @@ import {
   type BibleBookRow,
   type BibleVerseRow,
 } from "@/lib/bible-service";
-import { ChevronRight, BookOpen, Download, Check, Heart, Share2, Palette, X } from "lucide-react";
+import { ChevronRight, BookOpen, Download, Check, Heart, Share2, Palette, X, StickyNote } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 const BiblePage = () => {
@@ -36,7 +39,15 @@ const BiblePage = () => {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadedMap, setDownloadedMap] = useState<Record<number, boolean>>({});
   const [colorPicker, setColorPicker] = useState<{ chapter: number } | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
   const [chapFavTick, setChapFavTick] = useState(0); // força re-render quando muda
+
+  const openColorPicker = (chapter: number) => {
+    if (!selectedBook) return;
+    const existing = getChapterFavorite(selectedBook.id, chapter);
+    setNoteDraft(existing?.note ?? "");
+    setColorPicker({ chapter });
+  };
 
   useEffect(() => {
     getBooks()
@@ -91,15 +102,17 @@ const BiblePage = () => {
   };
 
   const handleFavoriteVerse = async (v: BibleVerseRow) => {
-    if (!user || !selectedBook || !selectedChapter) return;
+    if (!selectedBook || !selectedChapter) return;
     const reference = `${selectedBook.name} ${selectedChapter}:${v.verse}`;
-    const { error } = await supabase.from("favorites").insert({
-      user_id: user.id,
-      verse_reference: reference,
-      verse_text: v.text,
-    });
-    if (error) toast.error("Erro ao favoritar");
-    else toast.success("Adicionado aos favoritos");
+    const verse: BibleVerse = {
+      book: selectedBook.name,
+      chapter: selectedChapter,
+      verse: v.verse,
+      text: v.text,
+      reference,
+    };
+    const added = await toggleFavorite(verse);
+    toast(added ? "Adicionado aos favoritos" : "Removido dos favoritos");
   };
 
   // ── Verse view ──
@@ -128,26 +141,26 @@ const BiblePage = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {verses.map((v) => (
-                  <div
-                    key={v.verse}
-                    className="group flex gap-3 rounded-lg p-3 hover:bg-secondary/40 transition-colors"
-                  >
-                    <span className="text-xs font-bold text-primary mt-1 min-w-[1.5rem]">
-                      {v.verse}
-                    </span>
-                    <p className="flex-1 text-base leading-7 text-foreground/90">
-                      {v.text}
-                    </p>
-                    <button
-                      onClick={() => handleFavoriteVerse(v)}
-                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition-opacity"
-                      aria-label="Favoritar"
+                {verses.map((v) => {
+                  const ref = `${selectedBook.name} ${selectedChapter}:${v.verse}`;
+                  const fav = isFavorite(ref);
+                  return (
+                    <div
+                      key={v.verse}
+                      className="group flex gap-3 rounded-lg p-3 hover:bg-secondary/40 transition-colors"
                     >
-                      <Heart className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
+                      <span className="text-xs font-bold text-primary mt-1 min-w-[1.5rem]">{v.verse}</span>
+                      <p className="flex-1 text-base leading-7 text-foreground/90">{v.text}</p>
+                      <button
+                        onClick={() => handleFavoriteVerse(v)}
+                        className={`transition-opacity ${fav ? "opacity-100 text-primary" : "opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary"}`}
+                        aria-label="Favoritar"
+                      >
+                        <Heart className={`h-4 w-4 ${fav ? "fill-primary" : ""}`} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -199,7 +212,7 @@ const BiblePage = () => {
                 const fav = getChapterFavorite(selectedBook.id, ch);
                 const colorClass = fav ? CHAPTER_COLORS[fav.color].cellBg : "glass-card text-foreground hover:bg-primary hover:text-primary-foreground";
                 let pressTimer: any;
-                const openPicker = () => setColorPicker({ chapter: ch });
+                const openPicker = () => openColorPicker(ch);
                 return (
                   <button
                     key={ch}
@@ -235,21 +248,52 @@ const BiblePage = () => {
                       <X className="h-4 w-4" />
                     </button>
                   </div>
-                  <p className="text-xs text-muted-foreground">Escolha uma cor para marcar este capítulo</p>
+                  <p className="text-xs text-muted-foreground">Escolha uma cor e adicione uma anotação ✏️</p>
                   <div className="flex gap-2 flex-wrap">
-                    {(Object.keys(CHAPTER_COLORS) as ChapterColor[]).map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => {
-                          setChapterFavorite(selectedBook.id, selectedBook.name, colorPicker.chapter, c);
-                          setChapFavTick((t) => t + 1);
-                          setColorPicker(null);
-                          toast.success(`Marcado com ${CHAPTER_COLORS[c].label.toLowerCase()}`);
-                        }}
-                        title={CHAPTER_COLORS[c].label}
-                        className={`h-10 w-10 rounded-full ${CHAPTER_COLORS[c].btnBg} ring-2 ring-transparent hover:ring-foreground/40 transition-all`}
-                      />
-                    ))}
+                    {(Object.keys(CHAPTER_COLORS) as ChapterColor[]).map((c) => {
+                      const current = getChapterFavorite(selectedBook.id, colorPicker.chapter);
+                      const active = current?.color === c;
+                      return (
+                        <button
+                          key={c}
+                          onClick={() => {
+                            setChapterFavorite(selectedBook.id, selectedBook.name, colorPicker.chapter, c, noteDraft || undefined);
+                            setChapFavTick((t) => t + 1);
+                            toast.success(`Marcado com ${CHAPTER_COLORS[c].label.toLowerCase()}`);
+                          }}
+                          title={CHAPTER_COLORS[c].label}
+                          className={`h-10 w-10 rounded-full ${CHAPTER_COLORS[c].btnBg} ring-2 transition-all ${active ? "ring-foreground" : "ring-transparent hover:ring-foreground/40"}`}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <StickyNote className="h-3.5 w-3.5" /> Anotação (opcional)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={noteDraft}
+                      onChange={(e) => setNoteDraft(e.target.value)}
+                      placeholder="Escreva sua reflexão sobre este capítulo..."
+                      className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-sm resize-none focus:border-primary outline-none"
+                    />
+                    <button
+                      onClick={() => {
+                        const existing = getChapterFavorite(selectedBook.id, colorPicker.chapter);
+                        if (!existing) {
+                          setChapterFavorite(selectedBook.id, selectedBook.name, colorPicker.chapter, "gold", noteDraft || undefined);
+                        } else {
+                          updateChapterNote(selectedBook.id, colorPicker.chapter, noteDraft);
+                        }
+                        setChapFavTick((t) => t + 1);
+                        toast.success("Anotação salva");
+                        setColorPicker(null);
+                      }}
+                      className="w-full py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-foreground text-xs font-medium"
+                    >
+                      Salvar anotação
+                    </button>
                   </div>
                   <div className="flex gap-2 pt-2 border-t border-border/50">
                     <button
@@ -276,7 +320,7 @@ const BiblePage = () => {
                         }}
                         className="flex-1 py-2 rounded-lg bg-destructive/15 text-destructive text-sm font-medium"
                       >
-                        Remover cor
+                        Remover
                       </button>
                     )}
                   </div>
