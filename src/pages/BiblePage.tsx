@@ -7,7 +7,11 @@ import {
   isChapterFavorite,
   removeChapterFavorite,
   setChapterFavorite,
+  updateChapterNote,
+  toggleFavorite,
+  isFavorite,
   type ChapterColor,
+  type BibleVerse,
 } from "@/lib/bible-data";
 import { trackReading } from "@/lib/activity-tracker";
 import {
@@ -18,9 +22,8 @@ import {
   type BibleBookRow,
   type BibleVerseRow,
 } from "@/lib/bible-service";
-import { ChevronRight, BookOpen, Download, Check, Heart, Share2, Palette, X } from "lucide-react";
+import { ChevronRight, BookOpen, Download, Check, Heart, Share2, Palette, X, StickyNote } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 const BiblePage = () => {
@@ -91,15 +94,17 @@ const BiblePage = () => {
   };
 
   const handleFavoriteVerse = async (v: BibleVerseRow) => {
-    if (!user || !selectedBook || !selectedChapter) return;
+    if (!selectedBook || !selectedChapter) return;
     const reference = `${selectedBook.name} ${selectedChapter}:${v.verse}`;
-    const { error } = await supabase.from("favorites").insert({
-      user_id: user.id,
-      verse_reference: reference,
-      verse_text: v.text,
-    });
-    if (error) toast.error("Erro ao favoritar");
-    else toast.success("Adicionado aos favoritos");
+    const verse: BibleVerse = {
+      book: selectedBook.name,
+      chapter: selectedChapter,
+      verse: v.verse,
+      text: v.text,
+      reference,
+    };
+    const added = await toggleFavorite(verse);
+    toast(added ? "Adicionado aos favoritos" : "Removido dos favoritos");
   };
 
   // ── Verse view ──

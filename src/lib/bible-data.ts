@@ -307,6 +307,7 @@ export interface ChapterFavorite {
   bookName: string;
   chapter: number;
   color: ChapterColor;
+  note?: string;
   createdAt: string;
 }
 
@@ -325,10 +326,17 @@ export function isChapterFavorite(bookId: number, chapter: number): boolean {
   return !!getChapterFavorite(bookId, chapter);
 }
 
-export function setChapterFavorite(bookId: number, bookName: string, chapter: number, color: ChapterColor): void {
+export function setChapterFavorite(bookId: number, bookName: string, chapter: number, color: ChapterColor, note?: string): void {
+  const existing = getChapterFavorite(bookId, chapter);
   const list = getChapterFavorites().filter((c) => !(c.bookId === bookId && c.chapter === chapter));
-  list.unshift({ bookId, bookName, chapter, color, createdAt: new Date().toISOString() });
+  list.unshift({ bookId, bookName, chapter, color, note: note ?? existing?.note, createdAt: new Date().toISOString() });
   localStorage.setItem(CHAP_KEY, JSON.stringify(list));
+}
+
+export function updateChapterNote(bookId: number, chapter: number, note: string): void {
+  const existing = getChapterFavorite(bookId, chapter);
+  if (!existing) return;
+  setChapterFavorite(bookId, existing.bookName, chapter, existing.color, note);
 }
 
 export function removeChapterFavorite(bookId: number, chapter: number): void {
