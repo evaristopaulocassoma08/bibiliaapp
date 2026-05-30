@@ -133,26 +133,26 @@ const BiblePage = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {verses.map((v) => (
-                  <div
-                    key={v.verse}
-                    className="group flex gap-3 rounded-lg p-3 hover:bg-secondary/40 transition-colors"
-                  >
-                    <span className="text-xs font-bold text-primary mt-1 min-w-[1.5rem]">
-                      {v.verse}
-                    </span>
-                    <p className="flex-1 text-base leading-7 text-foreground/90">
-                      {v.text}
-                    </p>
-                    <button
-                      onClick={() => handleFavoriteVerse(v)}
-                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition-opacity"
-                      aria-label="Favoritar"
+                {verses.map((v) => {
+                  const ref = `${selectedBook.name} ${selectedChapter}:${v.verse}`;
+                  const fav = isFavorite(ref);
+                  return (
+                    <div
+                      key={v.verse}
+                      className="group flex gap-3 rounded-lg p-3 hover:bg-secondary/40 transition-colors"
                     >
-                      <Heart className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
+                      <span className="text-xs font-bold text-primary mt-1 min-w-[1.5rem]">{v.verse}</span>
+                      <p className="flex-1 text-base leading-7 text-foreground/90">{v.text}</p>
+                      <button
+                        onClick={() => handleFavoriteVerse(v)}
+                        className={`transition-opacity ${fav ? "opacity-100 text-primary" : "opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary"}`}
+                        aria-label="Favoritar"
+                      >
+                        <Heart className={`h-4 w-4 ${fav ? "fill-primary" : ""}`} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
