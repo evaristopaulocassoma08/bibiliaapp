@@ -39,7 +39,15 @@ const BiblePage = () => {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadedMap, setDownloadedMap] = useState<Record<number, boolean>>({});
   const [colorPicker, setColorPicker] = useState<{ chapter: number } | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
   const [chapFavTick, setChapFavTick] = useState(0); // força re-render quando muda
+
+  const openColorPicker = (chapter: number) => {
+    if (!selectedBook) return;
+    const existing = getChapterFavorite(selectedBook.id, chapter);
+    setNoteDraft(existing?.note ?? "");
+    setColorPicker({ chapter });
+  };
 
   useEffect(() => {
     getBooks()
@@ -204,7 +212,7 @@ const BiblePage = () => {
                 const fav = getChapterFavorite(selectedBook.id, ch);
                 const colorClass = fav ? CHAPTER_COLORS[fav.color].cellBg : "glass-card text-foreground hover:bg-primary hover:text-primary-foreground";
                 let pressTimer: any;
-                const openPicker = () => setColorPicker({ chapter: ch });
+                const openPicker = () => openColorPicker(ch);
                 return (
                   <button
                     key={ch}
@@ -240,21 +248,52 @@ const BiblePage = () => {
                       <X className="h-4 w-4" />
                     </button>
                   </div>
-                  <p className="text-xs text-muted-foreground">Escolha uma cor para marcar este capítulo</p>
+                  <p className="text-xs text-muted-foreground">Escolha uma cor e adicione uma anotação ✏️</p>
                   <div className="flex gap-2 flex-wrap">
-                    {(Object.keys(CHAPTER_COLORS) as ChapterColor[]).map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => {
-                          setChapterFavorite(selectedBook.id, selectedBook.name, colorPicker.chapter, c);
-                          setChapFavTick((t) => t + 1);
-                          setColorPicker(null);
-                          toast.success(`Marcado com ${CHAPTER_COLORS[c].label.toLowerCase()}`);
-                        }}
-                        title={CHAPTER_COLORS[c].label}
-                        className={`h-10 w-10 rounded-full ${CHAPTER_COLORS[c].btnBg} ring-2 ring-transparent hover:ring-foreground/40 transition-all`}
-                      />
-                    ))}
+                    {(Object.keys(CHAPTER_COLORS) as ChapterColor[]).map((c) => {
+                      const current = getChapterFavorite(selectedBook.id, colorPicker.chapter);
+                      const active = current?.color === c;
+                      return (
+                        <button
+                          key={c}
+                          onClick={() => {
+                            setChapterFavorite(selectedBook.id, selectedBook.name, colorPicker.chapter, c, noteDraft || undefined);
+                            setChapFavTick((t) => t + 1);
+                            toast.success(`Marcado com ${CHAPTER_COLORS[c].label.toLowerCase()}`);
+                          }}
+                          title={CHAPTER_COLORS[c].label}
+                          className={`h-10 w-10 rounded-full ${CHAPTER_COLORS[c].btnBg} ring-2 transition-all ${active ? "ring-foreground" : "ring-transparent hover:ring-foreground/40"}`}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <StickyNote className="h-3.5 w-3.5" /> Anotação (opcional)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={noteDraft}
+                      onChange={(e) => setNoteDraft(e.target.value)}
+                      placeholder="Escreva sua reflexão sobre este capítulo..."
+                      className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-sm resize-none focus:border-primary outline-none"
+                    />
+                    <button
+                      onClick={() => {
+                        const existing = getChapterFavorite(selectedBook.id, colorPicker.chapter);
+                        if (!existing) {
+                          setChapterFavorite(selectedBook.id, selectedBook.name, colorPicker.chapter, "gold", noteDraft || undefined);
+                        } else {
+                          updateChapterNote(selectedBook.id, colorPicker.chapter, noteDraft);
+                        }
+                        setChapFavTick((t) => t + 1);
+                        toast.success("Anotação salva");
+                        setColorPicker(null);
+                      }}
+                      className="w-full py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-foreground text-xs font-medium"
+                    >
+                      Salvar anotação
+                    </button>
                   </div>
                   <div className="flex gap-2 pt-2 border-t border-border/50">
                     <button
@@ -281,7 +320,7 @@ const BiblePage = () => {
                         }}
                         className="flex-1 py-2 rounded-lg bg-destructive/15 text-destructive text-sm font-medium"
                       >
-                        Remover cor
+                        Remover
                       </button>
                     )}
                   </div>
