@@ -451,6 +451,7 @@ export type Database = {
       }
       groups: {
         Row: {
+          church_id: string | null
           created_at: string
           description: string | null
           icon: string | null
@@ -464,6 +465,7 @@ export type Database = {
           requires_approval: boolean
         }
         Insert: {
+          church_id?: string | null
           created_at?: string
           description?: string | null
           icon?: string | null
@@ -477,6 +479,7 @@ export type Database = {
           requires_approval?: boolean
         }
         Update: {
+          church_id?: string | null
           created_at?: string
           description?: string | null
           icon?: string | null
@@ -489,7 +492,15 @@ export type Database = {
           pinned_message_id?: string | null
           requires_approval?: boolean
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "groups_church_id_fkey"
+            columns: ["church_id"]
+            isOneToOne: false
+            referencedRelation: "churches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       motivational_chapters: {
         Row: {
