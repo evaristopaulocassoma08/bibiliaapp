@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Church, MapPin, Phone, Calendar, Users, Plus, ArrowLeft, Clock, User as UserIcon, Trash2, Navigation as NavIcon } from "lucide-react";
+import { Church, MapPin, Phone, Calendar, Users, Plus, ArrowLeft, Clock, User as UserIcon, Trash2, Navigation as NavIcon, MessageCircle, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 interface ChurchData {
@@ -14,6 +14,7 @@ interface ChurchData {
 }
 interface Ministry { id: string; church_id: string; name: string; category: string; description: string | null; leader_name: string | null; leader_contact: string | null; schedule: string | null; }
 interface Event { id: string; church_id: string; title: string; description: string | null; starts_at: string; ends_at: string | null; location: string | null; recurrence: string | null; }
+interface GroupRow { id: string; name: string; description: string | null; icon: string | null; church_id: string | null; }
 
 const CATEGORIES = [
   { value: "coro", label: "🎵 Coro" },
@@ -33,24 +34,29 @@ const ChurchDetailPage = () => {
   const [church, setChurch] = useState<ChurchData | null>(null);
   const [ministries, setMinistries] = useState<Ministry[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
-  const [tab, setTab] = useState<"info" | "ministerios" | "eventos">("info");
+  const [groups, setGroups] = useState<GroupRow[]>([]);
+  const [tab, setTab] = useState<"info" | "ministerios" | "eventos" | "grupos">("info");
   const [showMin, setShowMin] = useState(false);
   const [showEvt, setShowEvt] = useState(false);
+  const [showGrp, setShowGrp] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   const [minForm, setMinForm] = useState({ name: "", category: "ministerio", description: "", leader_name: "", leader_contact: "", schedule: "" });
   const [evtForm, setEvtForm] = useState({ title: "", description: "", starts_at: "", ends_at: "", location: "", recurrence: "" });
+  const [grpForm, setGrpForm] = useState({ name: "", description: "", icon: "⛪" });
 
   const load = async () => {
     if (!id) return;
-    const [{ data: c }, { data: m }, { data: e }] = await Promise.all([
+    const [{ data: c }, { data: m }, { data: e }, { data: g }] = await Promise.all([
       supabase.from("churches").select("*").eq("id", id).maybeSingle(),
       supabase.from("church_ministries").select("*").eq("church_id", id).order("created_at"),
       supabase.from("church_events").select("*").eq("church_id", id).order("starts_at"),
+      supabase.from("groups").select("id,name,description,icon,church_id").eq("church_id", id).order("created_at"),
     ]);
     setChurch(c as ChurchData);
     setMinistries((m as Ministry[]) || []);
     setEvents((e as Event[]) || []);
+    setGroups((g as GroupRow[]) || []);
     if (user) {
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
       setIsAdmin(!!roles?.some((r: any) => r.role === "admin"));
@@ -95,6 +101,32 @@ const ChurchDetailPage = () => {
   const deleteEvent = async (eid: string) => {
     await supabase.from("church_events").delete().eq("id", eid);
     toast("Removido");
+    load();
+  };
+
+  const addGroup = async () => {
+    if (!user) { toast.error("Faça login"); return; }
+    if (!grpForm.name.trim() || !id) return;
+    const { data, error } = await supabase.from("groups").insert({
+      name: grpForm.name, description: grpForm.description || null, icon: grpForm.icon,
+      owner_id: user.id, church_id: id, is_public: true,
+    }).select().single();
+    if (error) { toast.error(error.message); return; }
+    await supabase.from("group_members").insert({ group_id: data.id, user_id: user.id, role: "admin" });
+    toast.success("Grupo criado!");
+    setGrpForm({ name: "", description: "", icon: "⛪" });
+    setShowGrp(false);
+    load();
+  };
+
+  const uploadChurchPhoto = async (file: File) => {
+    if (!user || !church) return;
+    const path = `${user.id}/${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("church-photos").upload(path, file);
+    if (error) { toast.error(error.message); return; }
+    const { data } = supabase.storage.from("church-photos").getPublicUrl(path);
+    await supabase.from("churches").update({ photo_url: data.publicUrl }).eq("id", church.id);
+    toast.success("Foto atualizada!");
     load();
   };
 
