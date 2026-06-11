@@ -126,6 +126,67 @@ export type Database = {
           },
         ]
       }
+      church_followers: {
+        Row: {
+          church_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          church_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          church_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "church_followers_church_id_fkey"
+            columns: ["church_id"]
+            isOneToOne: false
+            referencedRelation: "churches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      church_gallery: {
+        Row: {
+          caption: string | null
+          church_id: string
+          created_at: string
+          id: string
+          image_url: string
+          uploader_id: string
+        }
+        Insert: {
+          caption?: string | null
+          church_id: string
+          created_at?: string
+          id?: string
+          image_url: string
+          uploader_id: string
+        }
+        Update: {
+          caption?: string | null
+          church_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          uploader_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "church_gallery_church_id_fkey"
+            columns: ["church_id"]
+            isOneToOne: false
+            referencedRelation: "churches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       church_ministries: {
         Row: {
           category: string
@@ -163,6 +224,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "church_ministries_church_id_fkey"
+            columns: ["church_id"]
+            isOneToOne: false
+            referencedRelation: "churches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      church_posts: {
+        Row: {
+          author_id: string
+          church_id: string
+          content: string
+          created_at: string
+          id: string
+          image_url: string | null
+          pinned: boolean
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          church_id: string
+          content: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          pinned?: boolean
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          church_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          pinned?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "church_posts_church_id_fkey"
             columns: ["church_id"]
             isOneToOne: false
             referencedRelation: "churches"
@@ -215,6 +317,36 @@ export type Database = {
           name?: string
           photo_url?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      direct_messages: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
         }
         Relationships: []
       }
@@ -318,34 +450,40 @@ export type Database = {
       group_members: {
         Row: {
           banned: boolean
+          custom_role: string | null
           group_id: string
           id: string
           joined_at: string
           last_read_at: string
           muted: boolean
           nickname: string | null
+          permissions: Json | null
           role: string
           user_id: string
         }
         Insert: {
           banned?: boolean
+          custom_role?: string | null
           group_id: string
           id?: string
           joined_at?: string
           last_read_at?: string
           muted?: boolean
           nickname?: string | null
+          permissions?: Json | null
           role?: string
           user_id: string
         }
         Update: {
           banned?: boolean
+          custom_role?: string | null
           group_id?: string
           id?: string
           joined_at?: string
           last_read_at?: string
           muted?: boolean
           nickname?: string | null
+          permissions?: Json | null
           role?: string
           user_id?: string
         }
@@ -538,33 +676,108 @@ export type Database = {
         }
         Relationships: []
       }
+      note_automations: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled: boolean
+          flow: Json
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          flow?: Json
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          flow?: Json
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
+          color: string | null
           content: string | null
           created_at: string
           id: string
+          image_url: string | null
+          tags: string[] | null
           title: string
           updated_at: string
           user_id: string
           verse_reference: string | null
         }
         Insert: {
+          color?: string | null
           content?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
+          tags?: string[] | null
           title: string
           updated_at?: string
           user_id: string
           verse_reference?: string | null
         }
         Update: {
+          color?: string | null
           content?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
+          tags?: string[] | null
           title?: string
           updated_at?: string
           user_id?: string
           verse_reference?: string | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          link: string | null
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -597,6 +810,62 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      scheduled_events: {
+        Row: {
+          church_id: string | null
+          color: string | null
+          created_at: string
+          description: string | null
+          ends_at: string | null
+          id: string
+          location: string | null
+          recurrence: string | null
+          reminder_minutes: number | null
+          starts_at: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          church_id?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          location?: string | null
+          recurrence?: string | null
+          reminder_minutes?: number | null
+          starts_at: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          church_id?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          location?: string | null
+          recurrence?: string | null
+          reminder_minutes?: number | null
+          starts_at?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_events_church_id_fkey"
+            columns: ["church_id"]
+            isOneToOne: false
+            referencedRelation: "churches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sermon_comments: {
         Row: {
@@ -657,6 +926,42 @@ export type Database = {
           theme?: string
           title?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      user_follows: {
+        Row: {
+          created_at: string
+          followed_id: string
+          follower_id: string
+        }
+        Insert: {
+          created_at?: string
+          followed_id: string
+          follower_id: string
+        }
+        Update: {
+          created_at?: string
+          followed_id?: string
+          follower_id?: string
         }
         Relationships: []
       }
