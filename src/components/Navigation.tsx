@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Book, Heart, Home, Users, Search, StickyNote, Menu, X, User, Settings, Flame, Sparkles, LogOut, Church } from "lucide-react";
+import { Book, Heart, Home, Users, Search, StickyNote, Menu, X, User, Settings, Flame, Sparkles, LogOut, Church, Calendar, MessageCircle, Workflow } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { NotificationBell } from "@/components/NotificationBell";
 
 const navItems = [
   { title: "Início", url: "/", icon: Home },
@@ -12,8 +13,11 @@ const navItems = [
   { title: "Pregação IA", url: "/pregacao", icon: Sparkles },
   { title: "Favoritos", url: "/favoritos", icon: Heart },
   { title: "Notas", url: "/notas", icon: StickyNote },
+  { title: "Agenda", url: "/agenda", icon: Calendar },
+  { title: "Automações", url: "/automacoes", icon: Workflow },
   { title: "Igrejas", url: "/igrejas", icon: Church },
   { title: "Grupos", url: "/grupos", icon: Users },
+  { title: "Mensagens", url: "/mensagens", icon: MessageCircle },
   { title: "Perfil", url: "/perfil", icon: User },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
@@ -21,8 +25,8 @@ const navItems = [
 const bottomItems = [
   { title: "Início", url: "/", icon: Home },
   { title: "Bíblia", url: "/biblia", icon: Book },
-  { title: "IA", url: "/pregacao", icon: Sparkles },
-  { title: "Favoritos", url: "/favoritos", icon: Heart },
+  { title: "Agenda", url: "/agenda", icon: Calendar },
+  { title: "Chat", url: "/mensagens", icon: MessageCircle },
   { title: "Perfil", url: "/perfil", icon: User },
 ];
 
@@ -79,13 +83,14 @@ export function TopNav() {
               key={item.url}
               to={item.url}
               end={item.url === "/"}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors"
+              className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-muted-foreground hover:bg-secondary transition-colors"
               activeClassName="bg-secondary text-primary font-medium"
             >
               <item.icon className="h-4 w-4" />
-              {item.title}
+              <span className="hidden lg:inline">{item.title}</span>
             </NavLink>
           ))}
+          <NotificationBell />
           {user ? (
             <button onClick={handleSignOut} title="Sair" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors ml-1">
               <LogOut className="h-4 w-4" />
@@ -97,18 +102,21 @@ export function TopNav() {
           )}
         </nav>
 
-        {/* Mobile menu button */}
-        <button
-          onClick={() => setOpen(!open)}
-          className="md:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        {/* Mobile right side */}
+        <div className="flex items-center gap-1 md:hidden">
+          <NotificationBell />
+          <button
+            onClick={() => setOpen(!open)}
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile dropdown */}
       {open && (
-        <nav className="md:hidden border-t border-border/50 py-2 animate-fade-in bg-background/95 backdrop-blur-xl">
+        <nav className="md:hidden border-t border-border/50 py-2 animate-fade-in bg-background/95 backdrop-blur-xl max-h-[80vh] overflow-y-auto">
           {navItems.map((item) => (
             <NavLink
               key={item.url}

@@ -19,6 +19,10 @@ import AuthPage from "./pages/AuthPage";
 import AboutPage from "./pages/AboutPage";
 import ChurchesPage from "./pages/ChurchesPage";
 import ChurchDetailPage from "./pages/ChurchDetailPage";
+import AgendaPage from "./pages/AgendaPage";
+import MessagesPage from "./pages/MessagesPage";
+import DMChatPage from "./pages/DMChatPage";
+import AutomationsPage from "./pages/AutomationsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,7 +43,7 @@ const AppRoutes = () => {
         path="/login"
         element={loading ? <div className="min-h-screen bg-background flex items-center justify-center"><div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div> : user ? <Navigate to="/" replace /> : <AuthPage />}
       />
-      {/* Modo anônimo: leitura, favoritos, notas e perfil funcionam sem login */}
+      {/* Modo anônimo */}
       <Route path="/" element={<Index />} />
       <Route path="/biblia" element={<BiblePage />} />
       <Route path="/buscar" element={<SearchPage />} />
@@ -52,6 +56,10 @@ const AppRoutes = () => {
       <Route path="/igrejas" element={<ChurchesPage />} />
       <Route path="/igrejas/:id" element={<ChurchDetailPage />} />
       {/* Recursos sociais ainda exigem login */}
+      <Route path="/agenda" element={<ProtectedRoute><AgendaPage /></ProtectedRoute>} />
+      <Route path="/automacoes" element={<ProtectedRoute><AutomationsPage /></ProtectedRoute>} />
+      <Route path="/mensagens" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+      <Route path="/mensagens/:userId" element={<ProtectedRoute><DMChatPage /></ProtectedRoute>} />
       <Route path="/grupos" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
       <Route path="/grupos/:id" element={<ProtectedRoute><GroupChatPage /></ProtectedRoute>} />
       <Route path="/pregacao" element={<ProtectedRoute><PreachingPage /></ProtectedRoute>} />
